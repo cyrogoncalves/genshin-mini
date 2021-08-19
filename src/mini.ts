@@ -46,12 +46,23 @@ const lumineAnemoModel: CharacterModel = {
     burst: { atk: 1, dmgType: "Anemo", area: "all" }
   }
 }
+const lisaModel: CharacterModel = {
+  name: "Lisa",
+  def: 0,
+  maxHp: 10,
+  attacks: {
+    normal: { atk: 1, dmgType: "Electro" },
+    skill: { atk: 1, dmgType: "Electro", debuff: "Conductive" },
+    burst: { atk: 1, dmgType: "Electro", area: 3 }
+  }
+}
 
 export const amber: Character = {
   ...amberModel,
   hp: amberModel.maxHp,
 }
 export const lumine: Character = { ...lumineAnemoModel, hp: amberModel.maxHp };
+export const lisa: Character = { ...lisaModel, hp: amberModel.maxHp };
 
 class Enemy {
   hp: number;
@@ -129,11 +140,10 @@ export class Encounter {
     });
 
     this.enemies.forEach(e => {
-      const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
-      const swirlElement = swirlElements.find(it => e.infusions[it]);
-      if (e.infusions["Anemo"] && swirlElement) {
+      if (e.infusions["Pyro"] && e.infusions["Electro"]) { // overload
         e.hp -= 1; // TODO EM // TODO msg
-        delete e.infusions["Anemo"];
+        delete e.infusions["Pyro"];
+        delete e.infusions["Electro"];
       }
     });
     msgs.push(`${char.name} hit ${targetEnemies.map(e => e.name)} for ${charDmg}!`);
