@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.105.0/testing/asserts.ts";
-import { Encounter, amber, lumine, lisa, Goomba, Hilichurl } from './mini.ts';
+import { Encounter, amber, lumine, lisa, kaeya, Goomba, Hilichurl } from './mini.ts';
 
 Deno.test("Amber hits goombas", () => {
   const team = { myChars: [{...amber}] };
@@ -45,7 +45,7 @@ Deno.test("Amber ults on Hilichurls", () => {
 });
 
 Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
-  const team = { myChars: [{...amber}, {...lumine}, {...lisa}] };
+  const team = { myChars: [{...amber}, {...lumine}, {...lisa}, {...kaeya}] };
   const enemies = Array.from({ length:5 }, () => new Hilichurl());
   enemies.forEach(e => e.hp = 9);
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
@@ -59,10 +59,40 @@ Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
   assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, true, false, false]);
   assertEquals(enemies.map(e => !!e.infusions["Electro"]), [false, false, false, true, false]);
 
+  // swirl, spread, overload
   encounter.hit(team.myChars[1], encounter.enemies[0], "burst");
   assertEquals(enemies.map(e => e.hp), [5, 5, 4, 5, 8]);
   assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, false, false, false]);
   assertEquals(enemies.map(e => !!e.infusions["Electro"]), [false, false, false, false, true]);
+});
+
+Deno.test("Melt", () => {
+  const team = { myChars: [{...amber}, {...kaeya}] };
+  const enemies = Array.from({ length:5 }, () => new Hilichurl());
+  enemies.forEach(e => e.hp = 9);
+  const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
+
+  encounter.hit(team.myChars[0], encounter.enemies[1], "burst");
+  assertEquals(enemies.map(e => e.hp), [7, 7, 7, 9, 9]);
+  assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, true, false, false]);
+
+  // reverse melt
+  encounter.hit(team.myChars[1], encounter.enemies[2], "skill");
+  assertEquals(enemies.map(e => e.hp), [7, 7, 4, 7, 9]);
+  assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, true, false, false]);
+  assertEquals(enemies.map(e => !!e.infusions["Cryo"]), [false, false, false, true, false]);
+
+  // second reverse melt
+  encounter.hit(team.myChars[1], encounter.enemies[1], "skill");
+  assertEquals(enemies.map(e => e.hp), [7, 4, 1, 7, 9]);
+  assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, false, false, false]);
+  assertEquals(enemies.map(e => !!e.infusions["Cryo"]), [false, false, false, true, false]);
+
+  // melt
+  encounter.hit(team.myChars[0], encounter.enemies[4], "burst");
+  assertEquals(enemies.map(e => e.hp), [7, 4, 1, 3, 7]);
+  assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, false, false, true]);
+  assertEquals(enemies.map(e => !!e.infusions["Cryo"]), [false, false, false, false, false]);
 });
 
 // deno test --no-check

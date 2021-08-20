@@ -53,7 +53,17 @@ const lisaModel: CharacterModel = {
   attacks: {
     normal: { atk: 1, dmgType: "Electro" },
     skill: { atk: 1, dmgType: "Electro", debuff: "Conductive" },
-    burst: { atk: 1, dmgType: "Electro", area: 3 }
+    burst: { summon: { atk: 1, dmgType: "Electro", area: 3, duration: 3 } }
+  }
+}
+const kaeyaModel: CharacterModel = {
+  name: "Kaeya",
+  def: 0,
+  maxHp: 10,
+  attacks: {
+    normal: { atk: 1 },
+    skill: { atk: 2, dmgType: "Cryo", area: 2 },
+    burst: { summon: { atk: 1, dmgType: "Cryo", duration: 3, target: 0 } }
   }
 }
 
@@ -63,6 +73,7 @@ export const amber: Character = {
 }
 export const lumine: Character = { ...lumineAnemoModel, hp: amberModel.maxHp };
 export const lisa: Character = { ...lisaModel, hp: amberModel.maxHp };
+export const kaeya: Character = { ...kaeyaModel, hp: amberModel.maxHp };
 
 class Enemy {
   hp: number;
@@ -144,6 +155,8 @@ export class Encounter {
         e.hp -= 1; // TODO EM // TODO msg
         delete e.infusions["Pyro"];
         delete e.infusions["Electro"];
+      }
+      if (e.infusions["Pyro"] && e.infusions["Cryo"]) { // melt
       }
     });
     msgs.push(`${char.name} hit ${targetEnemies.map(e => e.name)} for ${charDmg}!`);
