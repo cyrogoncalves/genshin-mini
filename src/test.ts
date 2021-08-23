@@ -46,8 +46,7 @@ Deno.test("Amber ults on Hilichurls", () => {
 
 Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
   const team = { myChars: [{...amber}, {...lumine}, {...lisa}, {...kaeya}] };
-  const enemies = Array.from({ length:5 }, () => new Hilichurl());
-  enemies.forEach(e => e.hp = 9);
+  const enemies = Array.from({ length:5 }, () => new Hilichurl(9));
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
 
   encounter.hit(team.myChars[0], encounter.enemies[1], "burst");
@@ -68,8 +67,7 @@ Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
 
 Deno.test("Melt", () => {
   const team = { myChars: [{...amber}, {...kaeya}] };
-  const enemies = Array.from({ length:5 }, () => new Hilichurl());
-  enemies.forEach(e => e.hp = 9);
+  const enemies = Array.from({ length:5 }, () => new Hilichurl(9));
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
 
   encounter.hit(team.myChars[0], encounter.enemies[1], "burst");

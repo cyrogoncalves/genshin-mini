@@ -97,7 +97,7 @@ export class Goomba extends Enemy {
   constructor() { super("Goomba", 2, { normal: { atk: 1 } }); }
 }
 export class Hilichurl extends Enemy {
-  constructor() { super("Hilixú", 5, { normal: { atk: 1 } }); }
+  constructor(maxHp = 5) { super("Hilixú", maxHp, { normal: { atk: 1 } }); }
 }
 
 export class Encounter {
@@ -122,18 +122,17 @@ export class Encounter {
     const targetEnemies = attack.area === "all" ? this.enemies : (() => {
       const enemyIdx = this.enemies.indexOf(enemy);
       const area = attack.area || 1;
-      return this.enemies.slice(Math.max(0, enemyIdx - (area - 1) / 2), enemyIdx + area / 2 + 1);
+      return this.enemies.slice(Math.max(0, enemyIdx - Math.floor((area - 1) / 2)), enemyIdx + area / 2 + 1);
     })();
 
-    const charDmg: number[] = [];
     const spreadMap: {idx: number, element: Element}[] = [];
     targetEnemies.forEach(e => {
       const dmg = attack.atk - e.def;
-      charDmg.push(dmg);
-      e.hp -= dmg;
+      msgs.push(`${char.name} hit ${e.name} for ${dmg}!`);
 
       if (attack.dmgType) {
         if (attack.dmgType === "Anemo") {
+          e.hp -= dmg;
           const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
           const swirlElement = swirlElements.find(it => e.infusions[it]);
           if (swirlElement) { // swirl
@@ -141,14 +140,35 @@ export class Encounter {
             spreadMap.push({idx: this.enemies.indexOf(e) - 1, element: swirlElement});
             spreadMap.push({idx: this.enemies.indexOf(e) + 1, element: swirlElement});
           }
+        } else if (attack.dmgType === "Cryo") {
+          if (e.infusions["Pyro"]) { // reverse melt
+            e.hp -= dmg * 1.5; // TODO EM // TODO msg
+            if (!e.infusions["Pyro"].melted)
+              e.infusions["Pyro"].melted = true;
+            else
+              delete e.infusions["Pyro"];
+          } else {
+            e.hp -= dmg;
+            e.infusions[attack.dmgType] = { cooldown: 2 };
+          }
+        } else if (attack.dmgType === "Pyro") {
+          if (e.infusions["Cryo"]) { // melt
+            e.hp -= dmg * 2; // TODO EM // TODO msg
+            delete e.infusions["Cryo"];
+          } else {
+            e.hp -= dmg;
+            e.infusions[attack.dmgType] = { cooldown: 2 };
+          }
         } else {
+          e.hp -= dmg;
           e.infusions[attack.dmgType] = { cooldown: 2 };
         }
+      } else {
+        e.hp -= dmg;
       }
     });
-    spreadMap.filter(({idx}) => this.enemies[idx]).forEach(({ idx, element}) => {
-      this.enemies[idx].infusions[element] = { cooldown: 2 };
-    });
+    spreadMap.filter(({idx}) => this.enemies[idx])
+        .forEach(({ idx, element}) => this.enemies[idx].infusions[element] = { cooldown: 2 });
 
     this.enemies.forEach(e => {
       if (e.infusions["Pyro"] && e.infusions["Electro"]) { // overload
@@ -156,20 +176,13 @@ export class Encounter {
         delete e.infusions["Pyro"];
         delete e.infusions["Electro"];
       }
-      if (e.infusions["Pyro"] && e.infusions["Cryo"]) { // melt
-      }
     });
-    msgs.push(`${char.name} hit ${targetEnemies.map(e => e.name)} for ${charDmg}!`);
 
     const enemyDmg = enemy.attacks["normal"].atk - char.def;
     char.hp -= enemyDmg; // if not ranged
     msgs.push(`${enemy.name} hit back for ${enemyDmg}!`);
 
-    const falls: Enemy[] = [];
-    this.enemies.forEach(e => {
-      if (e.hp <= 0) falls.push(e);
-    });
-    falls.forEach(f => msgs.push(`${f.name} fell!`));
+    this.enemies.filter(e => e.hp <= 0).forEach(f => msgs.push(`${f.name} fell!`));
     this.enemies = this.enemies.filter(e => e.hp > 0);
 
     this.logs.push(msgs);
