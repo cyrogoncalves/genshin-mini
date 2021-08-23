@@ -1,8 +1,8 @@
 import { assertEquals } from "https://deno.land/std@0.105.0/testing/asserts.ts";
-import { Encounter, amber, lumine, lisa, kaeya, Goomba, Hilichurl } from './mini.ts';
+import { Encounter, Amber, Traveler, Lisa, Kaeya, Goomba, Hilichurl } from './mini.ts';
 
 Deno.test("Amber hits goombas", () => {
-  const team = { myChars: [{...amber}] };
+  const team = { myChars: [new Amber()] };
   const enemies = Array.from({ length:3 }, () => new Goomba());
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
 
@@ -22,7 +22,7 @@ Deno.test("Amber hits goombas", () => {
 });
 
 Deno.test("Goombas drop Amber", () => {
-  const team = { myChars: [{...amber}] };
+  const team = { myChars: [new Amber()] };
   const enemies = Array.from({ length:3 }, () => new Goomba());
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
   team.myChars[0].hp = 1;
@@ -32,7 +32,7 @@ Deno.test("Goombas drop Amber", () => {
 });
 
 Deno.test("Amber ults on Hilichurls", () => {
-  const team = { myChars: [{...amber}] };
+  const team = { myChars: [new Amber()] };
   const enemies = Array.from({ length:4 }, () => new Hilichurl());
   const encounter = new Encounter("You found 4 Hilichurls!", enemies, team);
 
@@ -45,7 +45,7 @@ Deno.test("Amber ults on Hilichurls", () => {
 });
 
 Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
-  const team = { myChars: [{...amber}, {...lumine}, {...lisa}, {...kaeya}] };
+  const team = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
   const enemies = Array.from({ length:5 }, () => new Hilichurl(9));
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
 
@@ -66,7 +66,7 @@ Deno.test("Amber ults then Lumine ults on Hilichurls", () => {
 });
 
 Deno.test("Melt", () => {
-  const team = { myChars: [{...amber}, {...kaeya}] };
+  const team = { myChars: [new Amber(), new Kaeya()] };
   const enemies = Array.from({ length:5 }, () => new Hilichurl(9));
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
 

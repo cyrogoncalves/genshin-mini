@@ -9,14 +9,21 @@ const artifact = "Witch_AP_S5A5_1a3p2r2c";
 
 type Element = 'Pyro' | 'Hydro' | 'Electro' | 'Cryo' | 'Anemo' | 'Geo' | 'Dendro';
 
-interface CharacterModel {
-  name: string,
-  def: number,
-  maxHp: number,
-  attacks: { normal, skill, burst }
-}
-interface Character extends CharacterModel {
-  hp: number
+abstract class Character {
+  public cooldowns: { [k in string]: number } = {};
+
+  protected constructor(
+      public readonly name: string,
+      public readonly attacks: { normal, skill, burst },
+      public maxHp: number = 10,
+      public def: number = 0,
+      public em = 1,
+      public hp: number = maxHp,
+  ) {}
+
+  cooldown = () => Object.entries(this.cooldowns)
+      .filter(([_, v]) => v > 0)
+      .forEach(([c]) => this.cooldowns[c]--);
 }
 
 const baronBunny = {
@@ -26,51 +33,34 @@ const baronBunny = {
   cooldown: 2,
   onEnd: { atk: 3, dmgType: "Pyro", area: 2 }
 }
-const amberModel: CharacterModel = {
-  name: "Amber",
-  def: 0,
-  maxHp: 10,
-  attacks: {
+export class Amber extends Character {
+  constructor() { super("Amber", {
     normal: { atk: 1 },
-    skill: { summon: baronBunny },
-    burst: { atk: 2, dmgType: "Pyro", area: 3 }
-  }
+    skill: { summon: baronBunny, cooldown: 3 },
+    burst: { atk: 2, dmgType: "Pyro", area: 3, cooldown: 5 }
+  })}
 }
-const lumineAnemoModel: CharacterModel = {
-  name: "Lumine",
-  def: 0,
-  maxHp: 10,
-  attacks: {
+export class Traveler extends Character {
+  constructor(name = "Lumine") { super(name, {
     normal: { atk: 1 },
-    skill: { atk: [1, 2], dmgType: "Anemo", area: 2 },
-    burst: { atk: 1, dmgType: "Anemo", area: "all" }
-  }
+    skill: { atk: [1, 2], dmgType: "Anemo", area: 2, cooldown: 3 },
+    burst: { atk: 1, dmgType: "Anemo", area: "all", cooldown: 5 }
+  })}
 }
-const lisaModel: CharacterModel = {
-  name: "Lisa",
-  def: 0,
-  maxHp: 10,
-  attacks: {
+export class Lisa extends Character {
+  constructor() { super("Lisa", {
     normal: { atk: 1, dmgType: "Electro" },
-    skill: { atk: 1, dmgType: "Electro", debuff: "Conductive" },
-    burst: { summon: { atk: 1, dmgType: "Electro", area: 3, duration: 3 } }
-  }
+    skill: { atk: 1, dmgType: "Electro", debuff: "Conductive", cooldown: 1 },
+    burst: { summon: { atk: 1, dmgType: "Electro", area: 3, duration: 3, cooldown: 5 } }
+  })}
 }
-const kaeyaModel: CharacterModel = {
-  name: "Kaeya",
-  def: 0,
-  maxHp: 10,
-  attacks: {
+export class Kaeya extends Character {
+  constructor() { super("Kaeya", {
     normal: { atk: 1 },
-    skill: { atk: 2, dmgType: "Cryo", area: 2 },
-    burst: { summon: { atk: 1, dmgType: "Cryo", duration: 3, target: 0 } }
-  }
+    skill: { atk: 2, dmgType: "Cryo", area: 2, cooldown: 2 },
+    burst: { summon: { atk: 1, dmgType: "Cryo", duration: 3, target: 0, cooldown: 5 } }
+  })}
 }
-
-export const amber: Character = { ...amberModel, hp: amberModel.maxHp }
-export const lumine: Character = { ...lumineAnemoModel, hp: amberModel.maxHp };
-export const lisa: Character = { ...lisaModel, hp: amberModel.maxHp };
-export const kaeya: Character = { ...kaeyaModel, hp: amberModel.maxHp };
 
 class Enemy {
   hp: number;
@@ -114,8 +104,6 @@ export class Encounter {
 
   hit = (char: Character, enemy: Enemy, atk = "normal") => {
     const msgs: String[] = [];
-    const em = 1; // TODO char.em
-
     // target selection...
     const attack = char.attacks[atk];
     const targetEnemies = !attack.area ? [enemy] : attack.area === "all" ? this.enemies : this.enemies.slice(
@@ -128,7 +116,7 @@ export class Encounter {
       const dmg = attack.atk - e.def;
       const swirlElement = swirlElements.find(it => e.infusions[it]);
       if (attack.dmgType === "Anemo" && swirlElement) { // swirl spread
-        const swirlDamage = em;
+        const swirlDamage = char.em;
         e.hp -= dmg + swirlDamage;
         const enemy1 = this.enemies[this.enemies.indexOf(e) - 1];
         const enemy2 = this.enemies[this.enemies.indexOf(e) + 1];
@@ -136,7 +124,7 @@ export class Encounter {
         if (enemy2) spreadMap.push({ enemy: enemy2, element: swirlElement });
         msgs.push(`${e.name} took ${dmg} ${attack.dmgType} and ${swirlDamage} swirl ${swirlElement} damage!`);
       } else if (attack.dmgType === "Cryo" && e.infusions["Pyro"]) { // reverse melt
-        e.hp -= dmg * 1.5 * em;
+        e.hp -= dmg * 1.5 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} melt damage!`);
         if (!e.infusions["Pyro"].melted)
           e.infusions["Pyro"].melted = true;
@@ -144,12 +132,12 @@ export class Encounter {
           delete e.infusions["Pyro"];
         delete e.infusions["Cryo"];
       } else if (attack.dmgType === "Pyro" && e.infusions["Cryo"]) { // melt
-        e.hp -= dmg * 2 * em;
+        e.hp -= dmg * 2 * char.em;
         delete e.infusions["Pyro"];
         delete e.infusions["Cryo"];
         msgs.push(`${char.name} hit ${e.name} for ${dmg} Melt damage!`);
       } else if (attack.dmgType === "Pyro" && e.infusions["Hydro"]) { // reverse vaporize
-        e.hp -= dmg * 1.5 * em;
+        e.hp -= dmg * 1.5 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} vaporize damage!`);
         if (!e.infusions["Hydro"].vaporized)
           e.infusions["Hydro"].vaporized = true;
@@ -157,7 +145,7 @@ export class Encounter {
           delete e.infusions["Hydro"];
         delete e.infusions["Pyro"];
       } else if (attack.dmgType === "Hydro" && e.infusions["Pyro"]) { // vaporize
-        e.hp -= dmg * 2 * em;
+        e.hp -= dmg * 2 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} Vaporize damage!`);
         delete e.infusions["Hydro"];
         delete e.infusions["Pyro"];
@@ -174,7 +162,7 @@ export class Encounter {
     spreadMap.forEach(({ enemy, element}) => enemy.infusions[element] = { cooldown: 2 });
     this.enemies.forEach((e, i) => {
       if (e.infusions["Pyro"] && e.infusions["Electro"]) { // overload
-        const overloadDmg = em;
+        const overloadDmg = char.em;
         e.hp -= overloadDmg;
         msgs.push(`${e.name} ${i} took ${overloadDmg} overload damage!`);
         delete e.infusions["Pyro"];
@@ -193,7 +181,7 @@ export class Encounter {
     return msgs;
   }
 
-  printState = (out = console.log) => {
+  printState = (out = console) => {
     out.log("");
     this.logs[this.logs.length - 1].forEach(r => out.log(r));
     const colWidth = [16, 10, 10, 10];
@@ -203,7 +191,7 @@ export class Encounter {
     for (let i = 0, paddingIdx = 0; i < maxLines; i++, paddingIdx = 0) {
       const teamLine = teamCells.map(c => (c[i] || "").padEnd(colWidth[paddingIdx++])).join("");
       const enemyLine = enemyCells.map(c => (c[i] || "").padEnd(colWidth[paddingIdx++])).join("");
-      out(`${teamLine} - ${enemyLine}`);
+      out.log(`${teamLine} - ${enemyLine}`);
     }
   }
 }
