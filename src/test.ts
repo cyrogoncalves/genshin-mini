@@ -1,5 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.105.0/testing/asserts.ts";
-import { Encounter, Amber, Traveler, Lisa, Kaeya, Goomba, Hilichurl } from './mini.ts';
+import { Amber, Traveler, Lisa, Kaeya, Goomba, Hilichurl } from './mini.ts';
+import { Encounter } from './encounter.ts';
 
 Deno.test("Amber hits goombas", () => {
   const team = { myChars: [new Amber()] };
