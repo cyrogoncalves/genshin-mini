@@ -1,4 +1,4 @@
-import { Character, Element, Enemy } from './mini.ts';
+import {Character, Element, Enemy} from './mini.ts';
 
 const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
 
@@ -27,6 +27,7 @@ export class Encounter {
     );
 
     const spreadMap: { enemy: Enemy, element: Element }[] = [];
+    let cristalizeElement;
     targetEnemies.forEach(e => {
       const dmg = attack.atk - e.def;
       const swirlElement = swirlElements.find(it => e.infusions[it]);
@@ -38,6 +39,12 @@ export class Encounter {
         if (enemy1) spreadMap.push({ enemy: enemy1, element: swirlElement });
         if (enemy2) spreadMap.push({ enemy: enemy2, element: swirlElement });
         msgs.push(`${e.name} took ${dmg} ${attack.dmgType} and ${swirlDamage} swirl ${swirlElement} damage!`);
+      } else if (attack.dmgType === "Geo"  && swirlElement) { // cristalize
+        e.hp -= dmg;
+        cristalizeElement = swirlElement;
+        if (!e.infusions[swirlElement].cristalized) e.infusions[swirlElement].cristalized = true;
+        else delete e.infusions[swirlElement];
+        msgs.push(`${e.name} took ${dmg} ${attack.dmgType} damage!`);
       } else if (attack.dmgType === "Cryo" && e.infusions["Pyro"]) { // reverse melt
         e.hp -= dmg * 1.5 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} melt damage!`);
@@ -72,6 +79,7 @@ export class Encounter {
         e.hp -= dmg;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} damage!`);
       }
+      // TODO superConduct overload freeze
     });
 
     spreadMap.forEach(({ enemy, element}) => enemy.infusions[element] = { cooldown: 2 });
@@ -85,9 +93,21 @@ export class Encounter {
       }
     });
 
-    const enemyDmg = enemy.attacks["normal"].atk - char.def;
-    char.hp -= enemyDmg; // if not ranged
-    msgs.push(`${enemy.name} hit back for ${enemyDmg}!`);
+    const maxShield = Object.values(this.team.shields || {})
+        .reduce((max, shield) => shield.hp > max ? shield.hp : max, 0);
+    if (maxShield > 0) {
+      // TODO shield types
+      Object.values(this.team.shields).forEach(s => s.hp -= enemy.attacks["normal"].atk);
+      Object.entries(this.team.shields)
+          .filter(([n, s]) => s.hp <= 0)
+          .map(([n]) => n)
+          .forEach(it => delete this.team.shields[it]);
+    }
+    const enemyDmg = enemy.attacks["normal"].atk - (maxShield || char.def);
+    if (enemyDmg > 0) char.hp -= enemyDmg; // if not ranged TODO
+    msgs.push(`${enemy.name} hit back for ${enemy.attacks["normal"].atk}!`);
+
+    if (cristalizeElement) this.team.shields.cristalize = { type: cristalizeElement, cooldown: 2, hp: char.em };
 
     this.enemies.filter(e => e.hp <= 0).forEach(f => msgs.push(`${f.name} fell!`));
     this.enemies = this.enemies.filter(e => e.hp > 0);

@@ -61,6 +61,13 @@ export class Kaeya extends Character {
     burst: { summon: { atk: 1, dmgType: "Cryo", duration: 3, target: 0, cooldown: 5 } }
   })}
 }
+export class Ningguang extends Character {
+  constructor() { super("Ningguang", {
+    normal: { atk: 1, dmgType: "Geo" },
+    skill: { atk: 2, dmgType: "Cryo", area: 2, cooldown: 2 }, // TODO
+    burst: { summon: { atk: 1, dmgType: "Cryo", duration: 3, target: 0, cooldown: 5 } }  // TODO
+  })}
+}
 
 export class Enemy {
   hp: number;
