@@ -119,14 +119,9 @@ export class Encounter {
   printState = (out = console) => {
     out.log("");
     this.logs[this.logs.length - 1].forEach(r => out.log(r));
-    const colWidth = [16, 10, 10, 10];
-    const maxLines = 2;
-    const teamCells = this.team.myChars.map(c => [`${c.name} HP:${c.hp}/${c.maxHp}`]);
-    const enemyCells = this.enemies.map(c => [c.name, `HP:${c.hp}/${c.maxHp}`]);
-    for (let i = 0, paddingIdx = 0; i < maxLines; i++, paddingIdx = 0) {
-      const teamLine = teamCells.map(c => (c[i] || "").padEnd(colWidth[paddingIdx++])).join("");
-      const enemyLine = enemyCells.map(c => (c[i] || "").padEnd(colWidth[paddingIdx++])).join("");
-      out.log(`${teamLine} - ${enemyLine}`);
-    }
+    const currentChar = this.team.myChars[this.team.cur || 0];
+    const bench = this.team.myChars.filter(c => currentChar.name !== c.name).map(c => c.name).join(" ");
+    const enemyCells = this.enemies.map(c => `${c.name}[${c.hp}/${c.maxHp}]`).join(" ");
+    out.log(`${bench}\n- ${currentChar.name}[${currentChar.hp}/${currentChar.maxHp}] - ${enemyCells}`);
   }
 }

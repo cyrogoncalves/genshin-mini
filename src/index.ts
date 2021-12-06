@@ -1,10 +1,8 @@
-import { Goomba } from './mini.ts';
+import {Amber, Goomba, Kaeya, Lisa, Traveler} from './mini.ts';
 import { Encounter } from './encounter.ts';
 
 window.onload = async () => {
-  const team = {
-    myChars: [amber]
-  };
+  const team = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
   const enemies = Array.from({ length:3 }, () => new Goomba());
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
 
@@ -12,9 +10,13 @@ window.onload = async () => {
   while (!quit) {
     try {
       encounter.printState();
-      const command = prompt("What will Amber do? => ");
+      const command = prompt("What will Amber do? =>");
       if (command === "hit") {
         encounter.hit(team.myChars[0], encounter.enemies[0]);
+      } else if (command === "e") {
+          encounter.hit(team.myChars[0], encounter.enemies[0], "skill");
+      } else if (command === "q") {
+          encounter.hit(team.myChars[0], encounter.enemies[0], "burst");
       } else if (command === "quit") {
         quit = true;
       }
@@ -25,24 +27,4 @@ window.onload = async () => {
   }
 }
 // ts-node src/index.ts
-// deno run --config ./tsconfig.json ./src/index.ts
-
-
-let person = 'Mike';
-let age = 28;
-
-function myTag(strings, personExp, ageExp) {
-  let str0 = strings[0]; // "That "
-  let str1 = strings[1]; // " is a "
-  let str2 = strings[2]; // "."
-
-  let ageStr = ageExp > 99 ? 'centenarian' : 'youngster';
-
-  // We can even return a string built using a template literal
-  return `${str0}${personExp}${str1}${ageStr}${str2}`;
-}
-
-let output = myTag`That ${ person } is a ${ age }.`;
-
-console.log(output);
-// That Mike is a youngster.
+// deno run --no-check --config ./tsconfig.json ./src/index.ts
