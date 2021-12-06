@@ -2,7 +2,7 @@ import {Amber, Goomba, Kaeya, Lisa, Traveler} from './mini.ts';
 import { Encounter } from './encounter.ts';
 
 window.onload = async () => {
-  const team = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
+  const team: any = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
   const enemies = Array.from({ length:3 }, () => new Goomba());
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
 
@@ -12,11 +12,13 @@ window.onload = async () => {
       encounter.printState();
       const command = prompt("What will Amber do? =>");
       if (command === "hit") {
-        encounter.hit(team.myChars[0], encounter.enemies[0]);
+        encounter.hit();
       } else if (command === "e") {
-          encounter.hit(team.myChars[0], encounter.enemies[0], "skill");
+          encounter.hit("skill");
       } else if (command === "q") {
-          encounter.hit(team.myChars[0], encounter.enemies[0], "burst");
+          encounter.hit("burst");
+      } else if (command === "switch4") {
+        team.cur = 3;
       } else if (command === "quit") {
         quit = true;
       }

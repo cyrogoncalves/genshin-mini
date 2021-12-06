@@ -17,7 +17,11 @@ export class Encounter {
     return !this.enemies.length || this.team.myChars.every(c => c.hp <= 0);
   }
 
-  hit = (char: Character, enemy: Enemy, atk = "normal") => {
+  hit = (
+      atk = "normal",
+      enemy: Enemy = this.enemies[0],
+      char: Character = this.team.myChars[this.team.cur || 0]
+  ) => {
     const msgs: String[] = [];
     // target selection...
     const attack = char.attacks[atk];
