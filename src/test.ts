@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.105.0/testing/asserts.ts";
-import { Amber, Traveler, Lisa, Kaeya, Ningguang, Goomba, Hilichurl } from './mini.ts';
+import { Amber, Traveler, Lisa, Kaeya, Ningguang, Goomba, Hilichurl, Team } from './mini.ts';
 import { Encounter } from './encounter.ts';
 
 Deno.test("Amber hits goombas", () => {
@@ -104,7 +104,7 @@ Deno.test("Melt", () => {
 Deno.test("Cristalize", () => {
   const amber = new Amber();
   const ning = new Ningguang();
-  const team: any = { myChars: [amber, ning], shields: {}, cur: 0 };
+  const team: Team = { myChars: [amber, ning], shields: {}, cur: 0 };
   const enemies = Array.from({ length:5 }, () => new Hilichurl(9));
   const encounter = new Encounter("You found 5 Hilichurls!", enemies, team);
 
@@ -114,13 +114,13 @@ Deno.test("Cristalize", () => {
   assertEquals(enemies.map(e => e.hp), [6, 7, 7, 9, 9]);
   assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [true, true, true, false, false]);
   assertEquals(ning.hp, 9);
-  assertEquals(team.shields.cristalize, { type: "Pyro", hp: 1, cooldown: 2 });
+  assertEquals(team.shields!.cristalize, { type: "Pyro", hp: 1, cooldown: 2 });
 
   encounter.hit();
   assertEquals(enemies.map(e => e.hp), [5, 7, 7, 9, 9]);
   assertEquals(enemies.map(e => !!e.infusions["Pyro"]), [false, true, true, false, false]);
   assertEquals(ning.hp, 9);
-  assertEquals(team.shields.cristalize, { type: "Pyro", hp: 1, cooldown: 2 });
+  assertEquals(team.shields!.cristalize, { type: "Pyro", hp: 1, cooldown: 2 });
 });
 
 // deno test --no-check

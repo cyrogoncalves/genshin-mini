@@ -2,12 +2,18 @@
 // Amber (****) Ascension 6 (++++++) Constellation 0 (------)
 //    talents Normal 0 (------) Elemental 6 (++++++) Burst 3 (+++---)
 
-const unit = "Amber_A6C0_N1E6B1";
-const weapon = "Amos_R1A6";
-// Crimson Witch Atk Plume 5* (+++++) 1atk 3cr 2er 2cd
-const artifact = "Witch_AP_S5A5_1a3p2r2c";
+// const unit = "Amber_A6C0_N1E6B1";
+// const weapon = "Amos_R1A6";
+// // Crimson Witch Atk Plume 5* (+++++) 1atk 3cr 2er 2cd
+// const artifact = "Witch_AP_S5A5_1a3p2r2c";
 
 export type Element = 'Pyro' | 'Hydro' | 'Electro' | 'Cryo' | 'Anemo' | 'Geo' | 'Dendro';
+
+export type Team = {
+  myChars: Character[],
+  cur?: number // current
+  shields?: { [name in string]: { hp: number, type: Element, cooldown: number } }
+}
 
 type Attack = {
   atk?: number,

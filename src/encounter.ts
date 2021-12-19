@@ -1,12 +1,6 @@
-import {Character, Element, Enemy} from './mini.ts';
+import { Character, Element, Enemy, Team } from './mini.ts';
 
 const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
-
-type Team = {
-  myChars: Character[],
-  cur?: number // current
-  shields?: { [name in string]: { hp: number, type: Element, cooldown: number } }
-}
 
 export class Encounter {
   logs: string[][] = [];
@@ -131,14 +125,5 @@ export class Encounter {
 
     this.logs.push(msgs);
     return msgs;
-  }
-
-  printState = (out = console) => {
-    out.log("");
-    this.logs[this.logs.length - 1].forEach(r => out.log(r));
-    const currentChar = this.team.myChars[this.team.cur || 0];
-    const bench = this.team.myChars.filter(c => currentChar.name !== c.name).map(c => c.name).join(" ");
-    const enemyCells = this.enemies.map(c => `${c.name}[${c.hp}/${c.maxHp}]`).join(" ");
-    out.log(`${bench}\n- ${currentChar.name}[${currentChar.hp}/${currentChar.maxHp}] - ${enemyCells}`);
   }
 }
