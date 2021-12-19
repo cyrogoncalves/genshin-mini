@@ -9,12 +9,21 @@ const artifact = "Witch_AP_S5A5_1a3p2r2c";
 
 export type Element = 'Pyro' | 'Hydro' | 'Electro' | 'Cryo' | 'Anemo' | 'Geo' | 'Dendro';
 
+type Attack = {
+  atk?: number,
+  dmgType?: Element,
+  area?: number | "all",
+  cooldown?: number,
+  summon?: any,
+  debuff?: string
+}
+
 export abstract class Character {
   public readonly cooldowns: { [k in string]: number } = {};
 
   protected constructor(
       public readonly name: string,
-      public readonly attacks: { normal, skill, burst },
+      public readonly attacks: { normal: Attack, skill: Attack, burst: Attack },
       public maxHp: number = 10,
       public def: number = 0,
       public em = 1,
@@ -43,7 +52,7 @@ export class Amber extends Character {
 export class Traveler extends Character {
   constructor(name = "Lumine") { super(name, {
     normal: { atk: 1 },
-    skill: { atk: [1, 2], dmgType: "Anemo", area: 2, cooldown: 3 },
+    skill: { atk: 2, dmgType: "Anemo", area: 2, cooldown: 3 },
     burst: { atk: 1, dmgType: "Anemo", area: "all", cooldown: 5 }
   })}
 }
@@ -72,13 +81,18 @@ export class Ningguang extends Character {
 export class Enemy {
   hp: number;
   infusions: {
-    [k in Element]?: any
+    [k in Element]?: {
+      cooldown: number,
+      cristalized?: boolean,
+      melted?: boolean,
+      vaporized?: boolean
+    };
   };
 
   protected constructor(
       public name: string,
       public maxHp: number,
-      public attacks,
+      public attacks: {[k in "normal" | "skill" | "burst"]?: Attack},
       public def: number = 0
   ) {
     this.hp = this.maxHp;

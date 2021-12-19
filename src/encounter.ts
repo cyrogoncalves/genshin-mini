@@ -2,13 +2,19 @@ import {Character, Element, Enemy} from './mini.ts';
 
 const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
 
+type Team = {
+  myChars: Character[],
+  cur?: number // current
+  shields?: { [name in string]: { hp: number, type: Element, cooldown: number } }
+}
+
 export class Encounter {
-  logs: String[][] = [];
+  logs: string[][] = [];
 
   constructor(
       public readonly description: string,
       public enemies: Enemy[],
-      public team?
+      public team: Team
   ) {
     this.logs.push([description]);
   }
@@ -18,11 +24,11 @@ export class Encounter {
   }
 
   hit = (
-      atk = "normal",
+      atk: "normal" | "skill" | "burst" = "normal",
       enemy: Enemy = this.enemies[0],
       char: Character = this.team.myChars[this.team.cur || 0]
   ) => {
-    const msgs: String[] = [];
+    const msgs: string[] = [];
     // target selection...
     const attack = char.attacks[atk];
     const targetEnemies = !attack.area ? [enemy] : attack.area === "all" ? this.enemies : this.enemies.slice(
@@ -31,9 +37,10 @@ export class Encounter {
     );
 
     const spreadMap: { enemy: Enemy, element: Element }[] = [];
-    let cristalizeElement;
+    let cristalizeElement: Element | undefined;
+    if (!attack.atk) return;
     targetEnemies.forEach(e => {
-      const dmg = attack.atk - e.def;
+      const dmg = attack.atk ?? 0 - e.def;
       const swirlElement = swirlElements.find(it => e.infusions[it]);
       if (attack.dmgType === "Anemo" && swirlElement) { // swirl spread
         const swirlDamage = char.em;
@@ -46,8 +53,10 @@ export class Encounter {
       } else if (attack.dmgType === "Geo"  && swirlElement) { // cristalize
         e.hp -= dmg;
         cristalizeElement = swirlElement;
-        if (!e.infusions[swirlElement].cristalized) e.infusions[swirlElement].cristalized = true;
-        else delete e.infusions[swirlElement];
+        if (!e.infusions[swirlElement]?.cristalized)
+          e.infusions[swirlElement]!.cristalized = true;
+        else
+          delete e.infusions[swirlElement];
         msgs.push(`${e.name} took ${dmg} ${attack.dmgType} damage!`);
       } else if (attack.dmgType === "Cryo" && e.infusions["Pyro"]) { // reverse melt
         e.hp -= dmg * 1.5 * char.em;
@@ -86,7 +95,7 @@ export class Encounter {
       // TODO superConduct overload freeze
     });
 
-    spreadMap.forEach(({ enemy, element}) => enemy.infusions[element] = { cooldown: 2 });
+    spreadMap.forEach(({ enemy, element }) => enemy.infusions[element] = { cooldown: 2 });
     this.enemies.forEach((e, i) => {
       if (e.infusions["Pyro"] && e.infusions["Electro"]) { // overload
         const overloadDmg = char.em;
@@ -97,21 +106,25 @@ export class Encounter {
       }
     });
 
-    const maxShield = Object.values(this.team.shields || {})
+    const enemyAtk = enemy.attacks["normal"]?.atk ?? 0;
+    if (!this.team.shields) this.team.shields = {};
+    const maxShield = Object.values(this.team.shields!)
         .reduce((max, shield) => shield.hp > max ? shield.hp : max, 0);
     if (maxShield > 0) {
       // TODO shield types
-      Object.values(this.team.shields).forEach(s => s.hp -= enemy.attacks["normal"].atk);
-      Object.entries(this.team.shields)
-          .filter(([n, s]) => s.hp <= 0)
+      Object.values(this.team.shields!).forEach(s => s.hp -= enemyAtk);
+      Object.entries(this.team.shields!)
+          .filter(([_n, s]) => s.hp <= 0)
           .map(([n]) => n)
-          .forEach(it => delete this.team.shields[it]);
+          .forEach(it => delete this.team.shields![it]);
     }
-    const enemyDmg = enemy.attacks["normal"].atk - (maxShield || char.def);
+    const enemyDmg = enemyAtk - (maxShield || char.def);
     if (enemyDmg > 0) char.hp -= enemyDmg; // if not ranged TODO
-    msgs.push(`${enemy.name} hit back for ${enemy.attacks["normal"].atk}!`);
+    msgs.push(`${enemy.name} hit back for ${enemyAtk}!`);
 
-    if (cristalizeElement) this.team.shields.cristalize = { type: cristalizeElement, cooldown: 2, hp: char.em };
+    if (cristalizeElement)
+      this.team.shields.cristalize =
+        { type: cristalizeElement, cooldown: 2, hp: char.em };
 
     this.enemies.filter(e => e.hp <= 0).forEach(f => msgs.push(`${f.name} fell!`));
     this.enemies = this.enemies.filter(e => e.hp > 0);

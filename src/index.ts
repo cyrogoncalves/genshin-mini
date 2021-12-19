@@ -1,8 +1,8 @@
 import {Amber, Goomba, Kaeya, Lisa, Traveler} from './mini.ts';
 import { Encounter } from './encounter.ts';
 
-window.onload = async () => {
-  const team: any = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
+window.onload = () => {
+  const team = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
   const enemies = Array.from({ length:3 }, () => new Goomba());
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
 
