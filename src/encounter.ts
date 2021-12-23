@@ -1,6 +1,6 @@
 import { Character, Element, Enemy, Team } from './mini.ts';
 
-const swirlElements: Element[] = ["Pyro", "Electro", "Hydro", "Cryo"];
+const swirlElements: Element[] = ["pyro", "electro", "hydro", "cryo"];
 
 export class Encounter {
   logs: string[][] = [];
@@ -36,7 +36,7 @@ export class Encounter {
     targetEnemies.forEach(e => {
       const dmg = attack.atk ?? 0 - e.def;
       const swirlElement = swirlElements.find(it => e.infusions[it]);
-      if (attack.dmgType === "Anemo" && swirlElement) { // swirl spread
+      if (attack.dmgType === "anemo" && swirlElement) { // swirl spread
         const swirlDamage = char.em;
         e.hp -= dmg + swirlDamage;
         const enemy1 = this.enemies[this.enemies.indexOf(e) - 1];
@@ -44,7 +44,7 @@ export class Encounter {
         if (enemy1) spreadMap.push({ enemy: enemy1, element: swirlElement });
         if (enemy2) spreadMap.push({ enemy: enemy2, element: swirlElement });
         msgs.push(`${e.name} took ${dmg} ${attack.dmgType} and ${swirlDamage} swirl ${swirlElement} damage!`);
-      } else if (attack.dmgType === "Geo"  && swirlElement) { // cristalize
+      } else if (attack.dmgType === "geo"  && swirlElement) { // cristalize
         e.hp -= dmg;
         cristalizeElement = swirlElement;
         if (!e.infusions[swirlElement]?.cristalized)
@@ -52,32 +52,32 @@ export class Encounter {
         else
           delete e.infusions[swirlElement];
         msgs.push(`${e.name} took ${dmg} ${attack.dmgType} damage!`);
-      } else if (attack.dmgType === "Cryo" && e.infusions["Pyro"]) { // reverse melt
+      } else if (attack.dmgType === "cryo" && e.infusions["pyro"]) { // reverse melt
         e.hp -= dmg * 1.5 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} melt damage!`);
-        if (!e.infusions["Pyro"].melted)
-          e.infusions["Pyro"].melted = true;
+        if (!e.infusions["pyro"].melted)
+          e.infusions["pyro"].melted = true;
         else
-          delete e.infusions["Pyro"];
-        delete e.infusions["Cryo"];
-      } else if (attack.dmgType === "Pyro" && e.infusions["Cryo"]) { // melt
+          delete e.infusions["pyro"];
+        delete e.infusions["cryo"];
+      } else if (attack.dmgType === "pyro" && e.infusions["cryo"]) { // melt
         e.hp -= dmg * 2 * char.em;
-        delete e.infusions["Pyro"];
-        delete e.infusions["Cryo"];
+        delete e.infusions["pyro"];
+        delete e.infusions["cryo"];
         msgs.push(`${char.name} hit ${e.name} for ${dmg} Melt damage!`);
-      } else if (attack.dmgType === "Pyro" && e.infusions["Hydro"]) { // reverse vaporize
+      } else if (attack.dmgType === "pyro" && e.infusions["hydro"]) { // reverse vaporize
         e.hp -= dmg * 1.5 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} vaporize damage!`);
-        if (!e.infusions["Hydro"].vaporized)
-          e.infusions["Hydro"].vaporized = true;
+        if (!e.infusions["hydro"].vaporized)
+          e.infusions["hydro"].vaporized = true;
         else
-          delete e.infusions["Hydro"];
+          delete e.infusions["hydro"];
         delete e.infusions["Pyro"];
-      } else if (attack.dmgType === "Hydro" && e.infusions["Pyro"]) { // vaporize
+      } else if (attack.dmgType === "hydro" && e.infusions["pyro"]) { // vaporize
         e.hp -= dmg * 2 * char.em;
         msgs.push(`${char.name} hit ${e.name} for ${dmg} Vaporize damage!`);
-        delete e.infusions["Hydro"];
-        delete e.infusions["Pyro"];
+        delete e.infusions["hydro"];
+        delete e.infusions["pyro"];
       } else if (attack.dmgType) {
         e.hp -= dmg;
         e.infusions[attack.dmgType] = { cooldown: 2 }
@@ -91,30 +91,32 @@ export class Encounter {
 
     spreadMap.forEach(({ enemy, element }) => enemy.infusions[element] = { cooldown: 2 });
     this.enemies.forEach((e, i) => {
-      if (e.infusions["Pyro"] && e.infusions["Electro"]) { // overload
+      if (e.infusions["pyro"] && e.infusions["electro"]) { // overload
         const overloadDmg = char.em;
         e.hp -= overloadDmg;
         msgs.push(`${e.name} ${i} took ${overloadDmg} overload damage!`);
-        delete e.infusions["Pyro"];
-        delete e.infusions["Electro"];
+        delete e.infusions["pyro"];
+        delete e.infusions["electro"];
       }
     });
 
-    const enemyAtk = enemy.attacks["normal"]?.atk ?? 0;
-    if (!this.team.shields) this.team.shields = {};
-    const maxShield = Object.values(this.team.shields!)
-        .reduce((max, shield) => shield.hp > max ? shield.hp : max, 0);
-    if (maxShield > 0) {
-      // TODO shield types
-      Object.values(this.team.shields!).forEach(s => s.hp -= enemyAtk);
-      Object.entries(this.team.shields!)
-          .filter(([_n, s]) => s.hp <= 0)
-          .map(([n]) => n)
-          .forEach(it => delete this.team.shields![it]);
-    }
-    const enemyDmg = enemyAtk - (maxShield || char.def);
-    if (enemyDmg > 0) char.hp -= enemyDmg; // if not ranged TODO
-    msgs.push(`${enemy.name} hit back for ${enemyAtk}!`);
+    const enemyAttack = enemy.attack(this);
+    [...enemyAttack.atk].forEach(enemyAtk => {
+      if (!this.team.shields) this.team.shields = {};
+      const maxShield = Object.values(this.team.shields!)
+          .reduce((max, shield) => shield.hp > max ? shield.hp : max, 0);
+      if (maxShield > 0) {
+        // TODO shield types
+        Object.values(this.team.shields!).forEach(s => s.hp -= enemyAtk);
+        Object.entries(this.team.shields!)
+            .filter(([_n, s]) => s.hp <= 0)
+            .map(([n]) => n)
+            .forEach(it => delete this.team.shields![it]);
+      }
+      const enemyDmg = enemyAtk - (maxShield || char.def);
+      if (enemyDmg > 0) char.hp -= enemyDmg; // if not ranged TODO
+    })
+    msgs.push(enemyAttack.msg);
 
     if (cristalizeElement)
       this.team.shields.cristalize =
