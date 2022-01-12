@@ -1,5 +1,15 @@
 import chalk from "https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js";
-import { Amber, Goomba, Kaeya, Lisa, Traveler, Team } from './mini.ts';
+import {
+  Amber,
+  Kaeya,
+  Lisa,
+  Traveler,
+  Team,
+  Hilichurl,
+  SamachurlHydro,
+  MitachurlAxePyro,
+  SlimePyro
+} from './mini.ts';
 import { Encounter } from './encounter.ts';
 
 const printEncounterState = (encounter: Encounter, out = console) => {
@@ -14,7 +24,7 @@ const printEncounterState = (encounter: Encounter, out = console) => {
 
 window.onload = () => {
   const team: Team = { myChars: [new Amber(), new Traveler(), new Lisa(), new Kaeya()] };
-  const enemies = Array.from({ length:3 }, () => new Goomba());
+  const enemies = [new Hilichurl(), new Hilichurl(), new MitachurlAxePyro(), new SamachurlHydro(), new SlimePyro()];
   const encounter = new Encounter("You found 3 Goombas!", enemies, team);
 
   let quit = false;
@@ -24,9 +34,9 @@ window.onload = () => {
       const command = prompt("What will Amber do? =>");
       if (command === "hit") {
         encounter.hit();
-      } else if (command === "e") {
+      } else if (["e", "skill"].includes(command)) {
           encounter.hit("skill");
-      } else if (command === "q") {
+      } else if (["q", "burst"].includes(command)) {
           encounter.hit("burst");
       } else if (command === "switch4") {
         team.cur = 3;

@@ -127,7 +127,7 @@ export class Hilichurl extends Enemy {
 }
 export class MitachurlAxePyro extends Enemy {
   infusedPyro = false;
-  constructor(maxHp = 15) { super("Mitaxú do Machado Ardente", maxHp); }
+  constructor(maxHp = 15) { super("Mitaxú🪓", maxHp); }
   attack(encounter) {
     if (!this.infusedPyro && Math.random() > 0.5) {
       this.infusedPyro = true;
@@ -153,9 +153,9 @@ export class MitachurlAxePyro extends Enemy {
 }
 export class SamachurlHydro extends Enemy {
   healing = 0;
-  constructor(maxHp = 5) { super("Samaxú Hydro", maxHp); }
+  constructor(maxHp = 5) { super("Samaxú🌊", maxHp); }
   resistances: {hydro:2}
-  attack(encounter) {
+  attack(encounter: Encounter) {
     const enemies = encounter.enemies;
     if (this.healing-- < 1 && enemies.some(e => e.hp < e.maxHp * 0.6))
       this.healing = 2;
@@ -180,7 +180,7 @@ export class SamachurlHydro extends Enemy {
 // }
 export class SlimePyro extends Enemy {
   infusedPyro = true;
-  constructor(maxHp = 4) { super("Geleco Pyro", maxHp); }
+  constructor(maxHp = 4) { super("Geleco🔥", maxHp); }
   onFaint: (encounter) => "explode with 1 damage";
   resistances: {pyro:9999} //⚡ 🌊 💥 💧 💦 🔥 ⚡ ❄ ⛰ ▰▱
   attack(encounter) {
