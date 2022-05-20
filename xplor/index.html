@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="eng">
+  <head>
+    <script src="https://pixijs.download/release/pixi.min.js"></script>
+    <title>Xplor</title>
+  </head>
+  <body>
+    <script>
+      const app = new PIXI.Application({
+          width: 800, height: 600, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
+      });
+      document.body.appendChild(app.view);
+
+      const container = new PIXI.Container();
+      app.stage.addChild(container);
+
+      // Create a new texture
+      const team = [
+        new PIXI.Sprite(PIXI.Texture.from("lanka.png")),
+        new PIXI.Sprite(PIXI.Texture.from("tartartaglia.png")),
+        new PIXI.Sprite(PIXI.Texture.from("morax.png")),
+        new PIXI.Sprite(PIXI.Texture.from("walnut.png")),
+      ];
+      let cur = 0;
+      const SIZE = 96;
+      team.forEach((t, i) => {
+        t.interactive = true;
+        t.on('pointerdown', () => cur = team.findIndex(c=>c===t));
+        t.anchor.set(0.5);
+        t.x = 0;
+        t.y = i * SIZE;
+        // t.scale = 0.5;
+        t.rotation = 0.06;
+        container.addChild(t);
+      });
+
+      // Move container to the center
+      container.x = SIZE/2;
+      container.y = SIZE/2;
+
+      // // Center bunny sprite in local container coordinates
+      // container.pivot.x = container.width / 2;
+      // container.pivot.y = container.height / 2;
+
+      // Listen for animate update
+      let elapsed = 0.0;
+      app.ticker.add(delta => {
+        elapsed += delta;
+        if (elapsed > 60) {
+          team.forEach(t => t.rotation = -t.rotation);
+          elapsed = 0.0;
+        }
+      });
+
+      const follow = (move) => {
+        let [pos0x, pos0y] = [team[cur].x, team[cur].y];
+        move(team[cur]);
+
+        const teamMateIdx = team.findIndex(c=>c!==team[cur] && c.x===team[cur].x && c.y===team[cur].y);
+        if (teamMateIdx > 0) {
+          [team[teamMateIdx].x, team[teamMateIdx].y] = [pos0x, pos0y];
+          [team[teamMateIdx], team[cur]] = [team[cur], team[teamMateIdx]];
+          cur = teamMateIdx;
+          return;
+        }
+
+        const slices = [team.slice(0, cur).reverse(), team.slice(cur+1)]
+                .sort((a,b)=>a.length-b.length);
+        console.log(`slices: ${slices.map(s=>s.toString())}`);
+        if (slices[0].length) {
+          const teamMateIdx2 = team.findIndex(c=>c===slices[0][0]);
+          [team[teamMateIdx2].x, team[teamMateIdx2].y] = [pos0x, pos0y];
+          [team[teamMateIdx2], team[cur]] = [team[cur], team[teamMateIdx2]];
+          cur = teamMateIdx2;
+          return;
+        }
+
+        slices[1].forEach(c=> [c.x, c.y, pos0x, pos0y] = [pos0x, pos0y, c.x, c.y]);
+      }
+
+      window.addEventListener("keydown", event => {
+        if (event.key === "ArrowLeft") follow(s=>s.x -= SIZE)
+        if (event.key === "ArrowRight") follow(s=>s.x += SIZE)
+        if (event.key === "ArrowUp") follow(s=>s.y -= SIZE)
+        if (event.key === "ArrowDown") follow(s=>s.y += SIZE)
+      }, false);
+    </script>
+  </body>
+</html>
