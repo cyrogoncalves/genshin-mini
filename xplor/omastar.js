@@ -1,17 +1,29 @@
 // https://www.redblobgames.com/pathfinding/a-star/introduction.html
-type Pos = {x:number, y:number};
-type Graph = {
+
+/** @typedef {{x:number, y:number}} Pos */
+/** @typedef {{
   cost: (current: Pos, next: Pos) => number,
   neighbors: (position: Pos) => Pos[]
-}
+}} Graph */
 
-export const createGraph = (maxX:number, maxY:number):Graph => ({
+/**
+ * @param {number} maxX
+ * @param {number} maxY
+ * @returns {Graph}
+ */
+const createGraph = (maxX, maxY) => ({
   cost: (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y),
   neighbors: p => [{x: p.x, y: p.y + 1}, {x: p.x + 1, y: p.y}, {x: p.x, y: p.y - 1}, {x: p.x - 1, y: p.y}]
-          .filter(({x, y}) => x >= 0 && x <= maxX && y >= 0 && y <= maxY)
+      .filter(({x, y}) => x >= 0 && x <= maxX && y >= 0 && y <= maxY)
 })
 
-const exploreFrontier = (start: Pos, goal: Pos, graph) => {
+/**
+ * @param {Pos} start
+ * @param {Pos} goal
+ * @param {Graph} graph
+ * @returns {{[p:string]: Pos}}
+ */
+const exploreFrontier = (start, goal, graph) => {
   const frontier = [start];
   const cameFrom = {};
   const costSoFar = {[`${start.x}_${start.y}`]: 0};
@@ -27,9 +39,8 @@ const exploreFrontier = (start: Pos, goal: Pos, graph) => {
         costSoFar[nextIdx] = newCost;
         cameFrom[nextIdx] = current;
 
-        console.log([0, 1, 2, 3, 4, 5, 6, 7, 8].map(x =>
-            [0, 1, 2, 3, 4, 5].map(y =>
-                /*`${x}_${y}:`+*/ String(costSoFar[`${x}_${y}`] ?? "-").padEnd(3)).join(" ")
+        console.log([0, 1, 2, 3, 4, 5, 6, 7, 8].map(x => [0, 1, 2, 3, 4, 5].map(y =>
+            /*`${x}_${y}:`+*/ String(costSoFar[`${x}_${y}`] ?? "-").padEnd(3)).join(" ")
         ).join("\n"))
 
         if (next.x === goal.x && next.y === goal.y) return cameFrom;
@@ -42,12 +53,18 @@ const exploreFrontier = (start: Pos, goal: Pos, graph) => {
   }
 }
 
-export const omastar = (start: Pos, goal: Pos, graph: Graph = createGraph(8, 5)) => {
+/**
+ * @param {Pos} start
+ * @param {Pos} goal
+ * @param {Graph} graph
+ * @returns {Pos[]}
+ */
+const omastar = (start, goal, graph = createGraph(8, 5)) => {
   const cameFrom = exploreFrontier(start, goal, graph);
   const path = [];
-  for (let n = goal; n !== start; n = cameFrom[`${n.x}_${n.y}`]) {
-    // console.log(n)
+  for (let n = goal; n !== start; n = cameFrom[`${n.x}_${n.y}`])
     path.unshift(n);
-  }
   return path;
 }
+
+module.exports = { createGraph, omastar };
