@@ -1,12 +1,35 @@
+import { omastar } from "./omastar.js";
+
 const app = new PIXI.Application({ width: 800, height: 600,
   backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
 document.body.appendChild(app.view);
 
+const SIZE = 96;
 const container = new PIXI.Container();
+container.x = SIZE/2;
+container.y = SIZE/2;
+container.width=800
+container.height=600
 app.stage.addChild(container);
 
+container.interactive = true;
+const realPath = new PIXI.Graphics();
+app.stage.addChild(realPath)
+container.on('pointerdown', ev => {
+  let goal = { x:Math.floor(ev.data.global.x/SIZE), y:Math.floor(ev.data.global.y/SIZE) };
+  const start = { x:Math.floor(team[cur].x/SIZE), y:Math.floor(team[cur].y/SIZE) };
+  console.log({ev, start, goal});
+  // goal = {x:8, y:5}
+  if (goal.x === start.x && start.y === goal.y) return;
+  const path = omastar(start, goal);
+  console.log({path});
+  realPath.clear();
+  realPath.lineStyle(2, 0xFFFFFF, 1);
+  realPath.moveTo(team[cur].x, team[cur].y);
+  path.forEach(p => realPath.lineTo(p.x*SIZE, p.y*SIZE))
+});
+
 let cur = 0;
-const SIZE = 96;
 const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"]
     .map(n => new PIXI.Sprite(PIXI.Texture.from(n)))
 team.forEach((t, i) => {
@@ -16,10 +39,6 @@ team.forEach((t, i) => {
   // t.scale = 0.5;
   container.addChild(t);
 });
-
-// Move container to the center
-container.x = SIZE/2;
-container.y = SIZE/2;
 
 let elapsed = 0.0;
 app.ticker.add(delta => {
@@ -44,7 +63,6 @@ const follow = (move) => {
 
   const slices = [team.slice(0, cur).reverse(), team.slice(cur+1)]
       .sort((a,b)=>a.length-b.length);
-  console.log(`slices: ${slices.map(s=>s.toString())}`);
   if (slices[0].length) {
     const idx2 = team.findIndex(c=>c===slices[0][0]);
     [team[idx2].x, team[idx2].y] = [pos0x, pos0y];

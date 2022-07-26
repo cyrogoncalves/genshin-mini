@@ -11,7 +11,7 @@
  * @param {number} maxY
  * @returns {Graph}
  */
-const createGraph = (maxX, maxY) => ({
+export const createGraph = (maxX, maxY) => ({
   cost: (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y),
   neighbors: p => [{x: p.x, y: p.y + 1}, {x: p.x + 1, y: p.y}, {x: p.x, y: p.y - 1}, {x: p.x - 1, y: p.y}]
       .filter(({x, y}) => x >= 0 && x <= maxX && y >= 0 && y <= maxY)
@@ -59,12 +59,10 @@ const exploreFrontier = (start, goal, graph) => {
  * @param {Graph} graph
  * @returns {Pos[]}
  */
-const omastar = (start, goal, graph = createGraph(8, 5)) => {
+export const omastar = (start, goal, graph = createGraph(8, 5)) => {
   const cameFrom = exploreFrontier(start, goal, graph);
   const path = [];
   for (let n = goal; n !== start; n = cameFrom[`${n.x}_${n.y}`])
     path.unshift(n);
   return path;
 }
-
-module.exports = { createGraph, omastar };
