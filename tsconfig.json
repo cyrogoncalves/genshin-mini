@@ -10,12 +10,15 @@
     "noImplicitAny": false,
     "target": "esnext",
     "lib": [
-      "es2019"
+      "es2019",
+      "dom"
     ],
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./xplor/generated",
     "baseUrl": "./",
     "resolveJsonModule": true,
-    "incremental": true
-  }
+    "incremental": true,
+  },
+  "include": ["xplor/source/**/*.ts"],
+  "exclude" : ["xplor/source/**/*.spec.ts"]
 }
