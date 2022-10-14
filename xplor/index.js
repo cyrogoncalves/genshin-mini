@@ -1,4 +1,5 @@
-import * as PIXI from "pixi.js";
+// import * as PIXI from "pixi.js";
+import { omastar } from "./omastar.js";
 
 /** @typedef AvatarEntity = { hex: {q:number, r:number} sprite: PIXI.Sprite } */
 
@@ -13,40 +14,47 @@ const container = new PIXI.Container();
 Object.assign(container, { x:SIZE/2, y:SIZE/2, width:800, height:600 });
 app.stage.addChild(container);
 
-// container.interactive = true;
-// const realPath = new PIXI.Graphics();
-// app.stage.addChild(realPath)
-// container.on('pointerdown', ev => {
-//   let goal = { x:Math.floor(ev.data.global.x/SIZE), y:Math.floor(ev.data.global.y/SIZE) };
-//   const start = { x:Math.floor(team[cur].x/SIZE), y:Math.floor(team[cur].y/SIZE) };
-//   console.log({ev, start, goal});
-//   // goal = {x:8, y:5}
-//   if (goal.x === start.x && start.y === goal.y) return;
-//   const path = omastar(start, goal);
-//   console.log({path});
-//   realPath.clear();
-//   realPath.lineStyle(2, 0xFFFFFF, 1);
-//   realPath.moveTo(team[cur].x, team[cur].y);
-//   path.forEach(p => realPath.lineTo(p.x*SIZE, p.y*SIZE))
-// });
+const pixelToPointyHex = point => ({
+  q: Math.floor((SQRT3/3 * point.x  -  1./3 * point.y) / SIZE),
+  r: Math.floor(2./3 * point.y / SIZE)
+})
+const pointyHexToPixel = hex => ({
+  x: SIZE * (SQRT3 * hex.q + SQRT3 / 2 * hex.r),
+  y: SIZE * 1.5 * hex.r
+})
+
+container.interactive = true;
+const realPath = new PIXI.Graphics();
+app.stage.addChild(realPath)
+container.on('pointerdown', ev => {
+  const goal = {q:1, r:3}//pixelToPointyHex(ev.data.global);
+  const start = team[cur].hex;
+  console.log({ev, start, goal});
+  if (goal.q === start.q && start.r === goal.r) return;
+  const path = omastar(start, goal);
+  console.log({path});
+  realPath.clear();
+  realPath.lineStyle(2, 0xFFFFFF, 1);
+  realPath.moveTo(team[cur].sprite.x, team[cur].sprite.y);
+  path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y))
+});
 
 let cur = 0;
 /** @type AvatarEntity[] */
 const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"].map((n, i) => ({
   hex: { q:i+2, r:3 },
-  sprite: new PIXI.Sprite(PIXI.Texture.from("../" + n))
+  sprite: new PIXI.Sprite(PIXI.Texture.from(n))
 }))
 team.forEach(t => {
   Object.assign(t.sprite, { rotation:0.06, interactive:true });
   t.sprite.on('pointerdown', () => cur = team.findIndex(c=>c.sprite===t.sprite));
   t.sprite.anchor.set(0.5);
-  t.sprite.
   // t.sprite.scale = 0.5;
   container.addChild(t.sprite);
 });
 const updatePos = () => team.forEach(t => {
-  t.sprite.x = SIZE * (SQRT3 * t.hex.q + SQRT3 / 2 * t.hex.r);
-  t.sprite.y = SIZE * 1.5 * t.hex.r
+  const point = pointyHexToPixel(t.hex);
+  [t.sprite.x, t.sprite.y] = [point.x, point.y];
 })
 updatePos()
 
