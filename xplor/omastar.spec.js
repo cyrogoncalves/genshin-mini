@@ -1,4 +1,4 @@
-const { omastar } = require("./omastar");
+import { omastar } from "./omastar";
 
 describe('path', () => {
   // beforeEach(() => {

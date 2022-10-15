@@ -62,12 +62,10 @@ const exploreFrontier = (start, goal, graph) => {
  * @param {Graph} graph
  * @returns {Hex[]}
  */
-const omastar = (start, goal, graph = createGraph()) => {
+export const omastar = (start, goal, graph = createGraph()) => {
   const cameFrom = exploreFrontier(start, goal, graph);
   const path = [];
   for (let n = goal; n !== start; n = cameFrom[`${n.q}_${n.r}`])
     path.unshift(n);
   return path;
 }
-
-module.exports = { omastar }
