@@ -3,16 +3,8 @@ import { omastar } from "./omastar.js";
 
 /** @typedef AvatarEntity = { hex: {q:number, r:number} sprite: PIXI.Sprite } */
 
-const app = new PIXI.Application({ width: 800, height: 600,
-  backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
-document.body.appendChild(app.view);
-
 const SIZE = 56;
 const SQRT3 = Math.sqrt(3);
-
-const container = new PIXI.Container();
-Object.assign(container, { x:SIZE/2, y:SIZE/2, width:800, height:600 });
-app.stage.addChild(container);
 
 const axialRound = (x, y) => {
   const xgrid = Math.round(x), ygrid = Math.round(y);
@@ -23,22 +15,14 @@ const axialRound = (x, y) => {
 }
 
 const pixelToPointyHex = (x, y) => axialRound(
-  ((SQRT3 / 3 * x - 1. / 3 * y) / SIZE),
-  (2. / 3 * y / SIZE)
+  (SQRT3 / 3 * x - 1. / 3 * y) / SIZE,
+  2. / 3 * y / SIZE
 )
 const pointyHexToPixel = hex => ({
   x: SIZE * (SQRT3 * hex.q + SQRT3 / 2 * hex.r),
   y: SIZE * 1.5 * hex.r
 });
 
-// [0,1,2,3,4,5,6,7].map(i=>[0,1,2,3,4,5,6,7].map(j=> {
-//   const path = new PIXI.Graphics();
-//   drawHex(path, {x:i, y:j});
-//   app.stage.addChild(path);
-// }))
-
-const curHexPath = new PIXI.Graphics();
-app.stage.addChild(curHexPath);
 const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   const points = [0,1,2,3,4,5].map(i => ({
     x: x + size * Math.cos(Math.PI / 180 * (60 * i - 30)),
@@ -48,19 +32,27 @@ const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   points.forEach(p => path.lineTo(p.x, p.y));
 }
 
+const app = new PIXI.Application({ width: 800, height: 600,
+  backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
+document.body.appendChild(app.view);
+
+const container = new PIXI.Container();
+Object.assign(container, { x:SIZE/2, y:SIZE/2, width:800, height:600 });
+app.stage.addChild(container);
+container.interactive = true;
+container.hitArea = new PIXI.Rectangle(0, 0, 800, 600);
+
 const selectedHexPath = new PIXI.Graphics();
 app.stage.addChild(selectedHexPath);
 
-container.interactive = true;
-container.hitArea = new PIXI.Rectangle(0, 0, 800, 600);
 const realPath = new PIXI.Graphics();
 app.stage.addChild(realPath)
 container.on('pointerdown', ev => {
   const goal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
-  console.log({ x: ev.data.global.x, y: ev.data.global.y, q: goal.q, r: goal.r });
+  // console.log({ x: ev.data.global.x, y: ev.data.global.y, q: goal.q, r: goal.r });
   if (team.some(t => goal.q === t.hex.q && goal.r === t.hex.r)) return;
   drawHex(selectedHexPath, pointyHexToPixel(goal), 0xFFFF66);
-  const path = omastar(team[cur].hex, goal);
+  const path = omastar(team[cur].hex, goal, team.map(t=>t.hex));
   // console.log({path});
   realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(team[cur].x, team[cur].y);
   path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y))
@@ -77,7 +69,7 @@ const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"].map((n
 team.forEach(t => {
   Object.assign(t.sprite, { rotation:0.06, interactive:true });
   t.sprite.on('pointerdown', () => {
-    cur = team.findIndex(c => c.sprite === t.sprite);
+    cur = team.findIndex(c => c === t);
     drawHex(curHexPath, team[cur]);
   });
   t.sprite.anchor.set(0.5);
@@ -88,6 +80,8 @@ const updatePos = () => team.forEach(t => {
   const point = pointyHexToPixel(t.hex);
   [t.sprite.x, t.sprite.y] = [point.x - SIZE/2, point.y - SIZE/2];
 })
+const curHexPath = new PIXI.Graphics();
+app.stage.addChild(curHexPath);
 updatePos()
 drawHex(curHexPath, team[cur]);
 
@@ -137,3 +131,5 @@ window.addEventListener("keydown", event => {
   const delta = moveMap[event.key]
   if (delta) { move(delta, team); updatePos(); }
 }, false);
+
+// TODO add collectible & interact, follow path, make path prettier, hexUtil.js, favicon
