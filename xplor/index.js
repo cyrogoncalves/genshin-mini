@@ -47,16 +47,24 @@ app.stage.addChild(selectedHexPath);
 
 const realPath = new PIXI.Graphics();
 app.stage.addChild(realPath)
+let path = null;
+let goal = null;
+let follow = false;
 container.on('pointerdown', ev => {
-  const goal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
+  const newGoal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
+  if (goal?.q === newGoal.q && goal?.r === newGoal.r) return (follow = true);
+  goal = newGoal;
   // console.log({ x: ev.data.global.x, y: ev.data.global.y, q: goal.q, r: goal.r });
   if (team.some(t => goal.q === t.hex.q && goal.r === t.hex.r)) return;
   drawHex(selectedHexPath, pointyHexToPixel(goal), 0xFFFF66);
-  const path = omastar(team[cur].hex, goal, team.map(t=>t.hex));
+  path = omastar(team[cur].hex, goal, team.map(t=>t.hex));
   // console.log({path});
-  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(team[cur].x, team[cur].y);
-  path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y))
+  drawPath(path, realPath)
 });
+const drawPath = (path, realPath) => {
+  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(team[cur].x, team[cur].y);
+  path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y));
+}
 
 let cur = 0;
 /** @type AvatarEntity[] */
@@ -70,6 +78,9 @@ team.forEach(t => {
   Object.assign(t.sprite, { rotation:0.06, interactive:true });
   t.sprite.on('pointerdown', () => {
     cur = team.findIndex(c => c === t);
+    goal = null;
+    selectedHexPath.clear();
+    realPath.clear();
     drawHex(curHexPath, team[cur]);
   });
   t.sprite.anchor.set(0.5);
@@ -90,6 +101,16 @@ app.ticker.add(delta => {
   elapsed += delta;
   if (elapsed > 60) {
     team.forEach(t => t.sprite.rotation = -t.sprite.rotation);
+    if (follow) {
+      move(path.shift(), team);
+      updatePos();
+      drawHex(curHexPath, team[cur]);
+      drawPath(path, realPath)
+      if (path.length === 0) {
+        selectedHexPath.clear();
+        follow = false;
+      }
+    }
     elapsed = 0.0;
   }
 });
@@ -107,14 +128,13 @@ const exchangePlaces = (team, idx, pos0q, pos0r) => {
 }
 
 /**
- * @param {number} dq
- * @param {number} dr
+ * @param {number} q
+ * @param {number} r
  * @param {AvatarEntity[]} team
  */
-const move = ([dq, dr], team) => {
+const move = ({q, r}, team) => {
   let [pos0q, pos0r] = [team[cur].hex.q, team[cur].hex.r];
-  team[cur].hex.q += dq;
-  team[cur].hex.r += dr;
+  team[cur].hex = {q:q, r:r};
 
   const idx = team.findIndex(c=>c!==team[cur] && c.hex.q===team[cur].hex.q && c.hex.r===team[cur].hex.r);
   if (idx > 0) return exchangePlaces(team, idx, pos0q, pos0r) // if the hex already had a unit, just exchange places
@@ -129,7 +149,7 @@ const move = ([dq, dr], team) => {
 const moveMap = { "w":[0, -1], "e":[1, -1], "d":[1, 0], "x":[0, 1], "z":[-1, 1], "a":[-1, 0] };
 window.addEventListener("keydown", event => {
   const delta = moveMap[event.key]
-  if (delta) { move(delta, team); updatePos(); }
+  if (delta) { move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team); updatePos(); }
 }, false);
 
-// TODO add collectible & interact, follow path, make path prettier, hexUtil.js, favicon
+// TODO add collectible & interact, make path prettier, hexUtil.js, favicon
