@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "rimraf generated && tsc --build tsconfig.json"
+    "build": "rimraf generated && tsc --build tsconfig.json",
+    "serve": "http-server ./xplor -o"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.19.4",

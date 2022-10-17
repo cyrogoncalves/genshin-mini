@@ -3,7 +3,7 @@ import { omastar } from "./omastar.js";
 
 /** @typedef AvatarEntity = { hex: {q:number, r:number} sprite: PIXI.Sprite } */
 
-const SIZE = 56;
+const SIZE = 28;
 const SQRT3 = Math.sqrt(3);
 
 const axialRound = (x, y) => {
@@ -14,14 +14,9 @@ const axialRound = (x, y) => {
   return {q:xgrid + dx, r:ygrid + dy};
 }
 
-const pixelToPointyHex = (x, y) => axialRound(
-  (SQRT3 / 3 * x - 1. / 3 * y) / SIZE,
-  2. / 3 * y / SIZE
-)
-const pointyHexToPixel = hex => ({
-  x: SIZE * (SQRT3 * hex.q + SQRT3 / 2 * hex.r),
-  y: SIZE * 1.5 * hex.r
-});
+const pixelToPointyHex = (x, y) => axialRound((SQRT3/3*x - 1./3*y)/SIZE, 2./3*y/SIZE);
+
+const pointyHexToPixel = ({q,r}) => ({x: SIZE*(SQRT3*q + SQRT3/2*r), y: SIZE*1.5*r});
 
 const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   const points = [0,1,2,3,4,5].map(i => ({
@@ -37,7 +32,7 @@ const app = new PIXI.Application({ width: 800, height: 600,
 document.body.appendChild(app.view);
 
 const container = new PIXI.Container();
-Object.assign(container, { x:SIZE/2, y:SIZE/2, width:800, height:600 });
+Object.assign(container, { width:800, height:600 });
 app.stage.addChild(container);
 container.interactive = true;
 container.hitArea = new PIXI.Rectangle(0, 0, 800, 600);
@@ -71,8 +66,8 @@ let cur = 0;
 const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"].map((n, i) => ({
   hex: { q:i+2, r:3 },
   sprite: new PIXI.Sprite(PIXI.Texture.from(n)),
-  get x() { return this.sprite.x + SIZE/2 },
-  get y() { return this.sprite.y + SIZE/2 }
+  get x() { return this.sprite.x },
+  get y() { return this.sprite.y }
 }))
 team.forEach(t => {
   Object.assign(t.sprite, { rotation:0.06, interactive:true });
@@ -84,36 +79,38 @@ team.forEach(t => {
     drawHex(curHexPath, team[cur]);
   });
   t.sprite.anchor.set(0.5);
-  // t.sprite.scale = 0.5;
+  t.sprite.scale.set(0.5);
   container.addChild(t.sprite);
 });
 const updatePos = () => team.forEach(t => {
   const point = pointyHexToPixel(t.hex);
-  [t.sprite.x, t.sprite.y] = [point.x - SIZE/2, point.y - SIZE/2];
+  [t.sprite.x, t.sprite.y] = [point.x, point.y];
 })
 const curHexPath = new PIXI.Graphics();
 app.stage.addChild(curHexPath);
 updatePos()
 drawHex(curHexPath, team[cur]);
 
-let elapsed = 0.0;
-app.ticker.add(delta => {
-  elapsed += delta;
-  if (elapsed > 60) {
-    team.forEach(t => t.sprite.rotation = -t.sprite.rotation);
-    if (follow) {
-      move(path.shift(), team);
-      updatePos();
-      drawHex(curHexPath, team[cur]);
-      drawPath(path, realPath)
-      if (path.length === 0) {
-        selectedHexPath.clear();
-        follow = false;
-      }
-    }
-    elapsed = 0.0;
-  }
-});
+const tickers = [
+  {speed:60, fn:()=>team.forEach(t => t.sprite.rotation = -t.sprite.rotation)},
+  {speed:20, fn:()=>{
+    if (!follow) return;
+    move(path.shift(), team);
+    updatePos();
+    drawHex(curHexPath, team[cur]);
+    drawPath(path, realPath);
+    if (path.length !== 0) return;
+    selectedHexPath.clear();
+    follow = false;
+  }},
+]
+app.ticker.add(delta => tickers.forEach(t=>{
+  if (!t.elapsed) t.elapsed = 0.0;
+  t.elapsed += delta;
+  if (t.elapsed < t.speed) return;
+  t.fn();
+  t.elapsed = 0.0
+}));
 
 /**
  * @param {AvatarEntity[]} team
@@ -152,4 +149,4 @@ window.addEventListener("keydown", event => {
   if (delta) { move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team); updatePos(); }
 }, false);
 
-// TODO add collectible & interact, make path prettier, hexUtil.js, favicon
+// TODO add collectible & interact, make path prettier
