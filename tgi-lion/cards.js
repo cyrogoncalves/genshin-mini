@@ -1,6 +1,5 @@
-import {Card, Cost} from "./model";
-
-export const strategize: Card = {
+/** @type Card */
+export const strategize = {
   name: "Strategize",
   costs: [{"any":1}],
   effect(game, paidCosts) {
