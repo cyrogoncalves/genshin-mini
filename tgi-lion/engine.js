@@ -1,28 +1,3 @@
-/**
- * @typedef {{
- *   userId: string,
- *   deck: Card[],
- *   characters: any[],
- *   hand: Card[],
- *   curCharIdx: number,
- *   dice: number[],
- *   supports: Support[],
- *   summons: Summon[],
- *
- *   draw: (number) => void
- * }} Player
- */
-/**
- * @typedef {{
- *   players: Player[],
- *   curPlayerIdx: number,
- *   player: Player,
- *   oppo: Player,
- *   char: TGICharacter,
- *   currentOpposingChar: TGICharacter,
- *   canStart(): boolean
- * }} Game
- */
 
 /**
  * @param {Deck} decks
@@ -81,7 +56,7 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   // todo shields
   game.logs.push(`${game.player.char.name} dealt ${dmg}`)
   game.oppo.char.hp -= dmg
-  // todo resolve faints & character select
+  // todo resolve knockouts & character select
   game.curPlayerIdx = (game.curPlayerIdx+1) % game.players.length
 }
 
@@ -95,8 +70,9 @@ export function attune(game, userId, dieIdx) {
   game.player.dice[dieIdx] = game.player.char.element
 }
 
+//reroll
 //playCard
 //changeChar
 //useSkill
 //surrender
-//passTurn *
+//endTurn

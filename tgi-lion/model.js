@@ -12,8 +12,35 @@ export const OMNI = 7
  * @typedef {{[c in number|"any"|"same"|"energy"]?:number}} Cost
  * @typedef {{name:string, costs:Cost[], effect:any}} Card
  * @typedef {{name:string, costs:Cost[], type:"normal"|"skill"|"burst", effect:any}} Skill
- * @typedef {{name:string, nation:string, element:number, skills:Skill[]}} TGICharacter
+ * @typedef {"bow"|"spear"|"sword"|"claymore"|"catalysts"} WeaponType
+ * @typedef {{name:string, nation:string, element:number, weaponType:WeaponType, skills:Skill[]}} TGICharacter
  * @typedef {{name:string, userId:string, characters:TGICharacter[], cards:Card[]}} Deck
  * @typedef {{name:string, at:"end"|"start"|"hit", duration:number, effect:any}} Summon
  * @typedef {{}} Support
+ */
+
+/**
+ * @typedef {{
+ *   userId: string,
+ *   deck: Card[],
+ *   characters: any[],
+ *   hand: Card[],
+ *   curCharIdx: number,
+ *   dice: number[],
+ *   supports: Support[],
+ *   summons: Summon[],
+ *
+ *   draw: (number) => void
+ * }} Player
+ */
+/**
+ * @typedef {{
+ *   players: Player[],
+ *   curPlayerIdx: number,
+ *   player: Player,
+ *   oppo: Player,
+ *   char: TGICharacter,
+ *   currentOpposingChar: TGICharacter,
+ *   canStart(): boolean
+ * }} Game
  */
