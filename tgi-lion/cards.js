@@ -9,3 +9,15 @@ export const strategize = {
     paidCosts.forEach(p => cur.dice.splice(p, 1))
   }
 }
+
+export const ChangingShifts = {
+  name:"Changing Shifts",
+  costs: [], // || "same":0
+  effect(game) {
+    game.player.effects.push({
+      at:"switchCharacter",
+      costModification:{any:-1},
+      count:1
+    });
+  }
+}

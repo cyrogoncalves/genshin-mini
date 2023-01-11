@@ -5,12 +5,13 @@
  */
 export const startGame = (...decks) => ({
   players: decks.map(deck => ({
-    deck: [...deck.cards],
-    characters: deck.characters.map(c => ({...c, hp:10, dmg:[], dmgBonus:0})),
-    userId: deck.userId,
-    hand: [], curCharIdx: -1, dice: [], supports: [], summons: [],
+    deck:[...deck.cards],
+    characters:deck.characters.map(c => ({...c, hp:10, dmg:[], dmgBonus:0})),
+    userId:deck.userId,
+    hand:[], curCharIdx:-1, dice:[], supports:[], summons:[],
+    effects:[],
     get char() {return this.characters[this.curCharIdx]},
-    draw(n) {this.hand.push(this.deck.splice(0, n))}
+    draw(n) {this.hand.push(...this.deck.splice(0, n))}
   })),
   curPlayerIdx: 0,
   logs:[],
@@ -48,8 +49,7 @@ const startTurn = (game) => {
  */
 export const attack = (game, userId, costDiceIdx, skillIdx) => {
   const skill = game.player.char.skills[skillIdx]
-  // todo validate cost
-  game.player.dice = game.player.dice.filter((_,i)=>!costDiceIdx.includes(i))
+  payDice({game, costDiceIdx})
   skill.effect(game)
   // todo resolve reactions
   const dmg = game.oppo.char.dmg.pop() + game.player.char.dmgBonus
@@ -57,17 +57,49 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   game.logs.push(`${game.player.char.name} dealt ${dmg}`)
   game.oppo.char.hp -= dmg
   // todo resolve knockouts & character select
-  game.curPlayerIdx = (game.curPlayerIdx+1) % game.players.length
+  passTurn({game})
 }
 
 /**
  * @param {Game} game
  * @param {string} userId
  * @param {number} dieIdx
+ * @param {number} cardIdx
  */
-export function attune(game, userId, dieIdx) {
-  // todo pay card
+export function attune(game, userId, dieIdx, cardIdx) {
+  game.player.hand.splice(cardIdx, 1)
   game.player.dice[dieIdx] = game.player.char.element
+}
+
+/**
+ * @param {Game} game
+ * @param {number[]} costDiceIdx
+ */
+const payDice = ({game, costDiceIdx}) => {
+  // todo validate cost
+  game.player.dice = game.player.dice.filter((_,i)=>!costDiceIdx.includes(i))
+}
+
+/** @param {Game} game */
+const passTurn = ({game}) =>
+  game.curPlayerIdx = (game.curPlayerIdx+1) % game.players.length
+
+/**
+ * @param {Game} game
+ * @param {number[]} costDiceIdx
+ */
+export const changeCharacter = (game, costDiceIdx) => {
+  payDice({game, costDiceIdx})
+  passTurn({game})
+}
+
+/**
+ * @param {Game} game
+ * @param {number} cardIdx
+ */
+export const playCard = (game, cardIdx) => {
+  const [card] = game.player.hand.splice(cardIdx, 1)
+  card.effect(game)
 }
 
 //reroll
