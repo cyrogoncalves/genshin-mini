@@ -1,3 +1,4 @@
+import {elements, OMNI} from "./model";
 
 /**
  * @param {Deck} decks
@@ -71,13 +72,38 @@ export function attune(game, userId, dieIdx, cardIdx) {
   game.player.dice[dieIdx] = game.player.char.element
 }
 
+export const validateCost = (cost, dice) => {
+  // const sortedCost = Object.entries(cost).flatMap(([k,v]) => Array.from({length:v}, ()=>k))
+  // dice = dice.sort((a,b)=>a<b)
+  // if (dice.length !== sortedCost.length) return false
+
+  Object.entries(cost).forEach(([k,v]) => {
+    if (k==="any") {
+      if (v > dice.length) return false
+      dice.splice(0, v)
+    } else {
+      const element = k==="same" ? elements.find(el => dice.filter(d=>d===el||d===OMNI).length >= v) : +k
+      for (let i = 0; i < v; i++) {
+        const idx = dice.findIndex(d=>d===element||d===OMNI);
+        if (idx === -1) return false
+        dice.splice(idx, 1)
+      }
+    }
+  })
+  return dice.length === 0
+  // const paidCost = paidDice.reduce((obj, el)=>({...obj, [el]:(obj[el]||0)+1}), {})
+}
+
 /**
  * @param {Game} game
  * @param {number[]} costDiceIdx
+ * @param {Cost} cost
  */
-const payDice = ({game, costDiceIdx}) => {
-  // todo validate cost
-  game.player.dice = game.player.dice.filter((_,i)=>!costDiceIdx.includes(i))
+const payDice = ({game, costDiceIdx, cost}) => {
+  let paidDice = costDiceIdx.map(i => game.player.dice[i])
+  if (!validateCost(cost, paidDice)) return;
+
+  game.player.dice = game.player.dice.filter((_, i)=>!costDiceIdx.includes(i))
 }
 
 /** @param {Game} game */

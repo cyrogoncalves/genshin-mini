@@ -8,6 +8,9 @@ export const CRYO = 5
 export const GEO = 6
 export const OMNI = 7
 
+export const elements = [PYRO, HYDRO, ANEMO, ELECTRO, DENDRO, CRYO, GEO]
+export const diceCosts = [OMNI, ...elements, "same", "any"]
+
 /**
  * @typedef {{[c in number|"any"|"same"|"energy"]?:number}} Cost
  * @typedef {{name:string, costs:Cost[], effect:any}} Card

@@ -2,7 +2,7 @@ import {Collei} from "./collei.character.js";
 import {Diluc} from "./diluc.character.js";
 import {ChangingShifts, strategize} from "./cards.js";
 import * as engine from "./engine.js";
-import {DENDRO} from "./model.js";
+import {DENDRO, OMNI, PYRO} from "./model.js";
 
 describe("engine", () => {
   it("opponent receives normal attack damage", () => {
@@ -41,4 +41,21 @@ describe("engine", () => {
     engine.changeCharacter(game, [])
     expect(game.oppo.dice.length).toBe(5); // doesn't consumes dice
   });
+
+  it("validates costs", () => {
+    expect(engine.validateCost({[PYRO]:3}, [PYRO, PYRO, PYRO])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:3}, [PYRO, PYRO, DENDRO])).toBeFalsy()
+    expect(engine.validateCost({[PYRO]:3}, [PYRO, PYRO, OMNI])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, [PYRO, PYRO, PYRO])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, [PYRO, PYRO, DENDRO])).toBeFalsy()
+    expect(engine.validateCost({"same":3}, [PYRO, PYRO, OMNI])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, [OMNI, OMNI, OMNI])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [PYRO, PYRO, PYRO])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [PYRO, PYRO, DENDRO])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [PYRO, PYRO, OMNI])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [DENDRO, DENDRO, DENDRO])).toBeFalsy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [DENDRO, OMNI, DENDRO])).toBeTruthy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [DENDRO, OMNI])).toBeFalsy()
+    expect(engine.validateCost({[PYRO]:1,"any":2}, [DENDRO, OMNI, PYRO, OMNI])).toBeFalsy()
+  })
 });
