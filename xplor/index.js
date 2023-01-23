@@ -18,6 +18,8 @@ const pixelToPointyHex = (x, y) => axialRound((SQRT3/3*x - 1./3*y)/SIZE, 2./3*y/
 
 const pointyHexToPixel = ({q,r}) => ({x: SIZE*(SQRT3*q + SQRT3/2*r), y: SIZE*1.5*r});
 
+const sameHex = (h1, h2) => h1?.q === h2.q && h1?.r === h2.r;
+
 const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   const points = [0,1,2,3,4,5].map(i => ({
     x: x + size * Math.cos(Math.PI / 180 * (60 * i - 30)),
@@ -45,14 +47,19 @@ app.stage.addChild(realPath)
 let path = null;
 let goal = null;
 let follow = false;
+let goalEntity = null;
 container.on('pointerdown', ev => {
   const newGoal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
-  if (goal?.q === newGoal.q && goal?.r === newGoal.r) return (follow = true);
+  if (sameHex(goal, newGoal)) return (follow = true); // second click on goal
+
   goal = newGoal;
   // console.log({ x: ev.data.global.x, y: ev.data.global.y, q: goal.q, r: goal.r });
-  if (team.some(t => goal.q === t.hex.q && goal.r === t.hex.r)) return;
-  drawHex(selectedHexPath, pointyHexToPixel(goal), 0xFFFF66);
-  path = omastar(team[cur].hex, goal, entities.map(t=>t.hex));
+  if (team.some(t => sameHex(goal, t.hex))) return; // clicked on a char
+
+  goalEntity = entities.find(it => sameHex(goal, it.hex));
+  const color = goalEntity ? 0xFF6666 : 0xFFFF66;
+  drawHex(selectedHexPath, pointyHexToPixel(goal), color);
+  path = omastar(team[cur].hex, goal, entities.map(t=>t.hex).filter(it=>!sameHex(it, goal)));
   // console.log({path});
   drawPath(path, realPath)
 });
@@ -90,7 +97,7 @@ team.forEach(t => {
   addToContainer(t)
 });
 
-const loot = [
+[ // loot on map
   {hex: {q:8,r:5}, name:"Gladiator's Nostalgia.png"},
   {hex: {q:5,r:6}, name:"Royal Masque.png"},
   {hex: {q:1,r:9}, name:"Viridescent Arrow Feather.png"},
@@ -99,8 +106,7 @@ const loot = [
   sprite: new PIXI.Sprite(PIXI.Texture.from(`./assets/${name}`)),
   get x() { return this.sprite.x },
   get y() { return this.sprite.y }
-}))
-loot.forEach(it => addToContainer(it, 0.25));
+})).forEach(it => addToContainer(it, 0.25));
 
 const updatePos = (it) => it.forEach(t => {
   const point = pointyHexToPixel(t.hex);
@@ -108,19 +114,29 @@ const updatePos = (it) => it.forEach(t => {
 })
 const curHexPath = new PIXI.Graphics();
 app.stage.addChild(curHexPath);
-drawHex(curHexPath, team[cur]);
-console.log(entities);
 updatePos(entities);
+drawHex(curHexPath, team[cur]);
+
+const loot = [];
 
 const tickers = [
   {elapsed:0.0, speed:60, fn:()=>team.forEach(t => t.sprite.rotation = -t.sprite.rotation)},
   {elapsed:0.0, speed:20, fn:()=>{
     if (!follow) return;
-    move(path.shift(), team);
-    updatePos(team);
-    drawHex(curHexPath, team[cur]);
-    drawPath(path, realPath);
-    if (path.length !== 0) return;
+    const step = path.shift();
+    if (!sameHex(goalEntity?.hex, step)) {
+      move(step, team);
+      updatePos(team);
+      drawHex(curHexPath, team[cur]);
+      drawPath(path, realPath);
+      if (path.length !== 0) return;
+    } else {
+      loot.push(goalEntity);
+      entities.splice(entities.findIndex(it=>sameHex(it.hex, goalEntity.hex)), 1);
+      console.log("pick!", entities);
+      container.removeChild(goalEntity.sprite);
+      realPath.clear();
+    }
     selectedHexPath.clear();
     follow = false;
   }},
