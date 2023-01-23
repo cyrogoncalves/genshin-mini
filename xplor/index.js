@@ -95,7 +95,7 @@ const loot = [
   {hex: {q:8,r:5}, name:"Gladiator's Nostalgia.png"},
   {hex: {q:5,r:6}, name:"Royal Masque.png"},
   {hex: {q:1,r:9}, name:"Viridescent Arrow Feather.png"},
-].map(({hex, name}, i) => ({
+].map(({hex, name}) => ({
   hex,
   sprite: new PIXI.Sprite(PIXI.Texture.from(`./assets/${name}`)),
   get x() { return this.sprite.x },
@@ -110,8 +110,8 @@ loot.forEach(it => {
 updatePos(loot)
 
 const tickers = [
-  {speed:60, fn:()=>team.forEach(t => t.sprite.rotation = -t.sprite.rotation)},
-  {speed:20, fn:()=>{
+  {elapsed:0.0, speed:60, fn:()=>team.forEach(t => t.sprite.rotation = -t.sprite.rotation)},
+  {elapsed:0.0, speed:20, fn:()=>{
     if (!follow) return;
     move(path.shift(), team);
     updatePos(team);
@@ -123,11 +123,8 @@ const tickers = [
   }},
 ]
 app.ticker.add(delta => tickers.forEach(t=>{
-  if (!t.elapsed) t.elapsed = 0.0;
   t.elapsed += delta;
-  if (t.elapsed < t.speed) return;
-  t.fn();
-  t.elapsed = 0.0
+  if (t.elapsed > t.speed) { t.fn(); t.elapsed = 0.0; }
 }));
 
 /**
