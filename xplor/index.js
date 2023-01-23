@@ -82,21 +82,39 @@ team.forEach(t => {
   t.sprite.scale.set(0.5);
   container.addChild(t.sprite);
 });
-const updatePos = () => team.forEach(t => {
+const updatePos = (it) => it.forEach(t => {
   const point = pointyHexToPixel(t.hex);
   [t.sprite.x, t.sprite.y] = [point.x, point.y];
 })
 const curHexPath = new PIXI.Graphics();
 app.stage.addChild(curHexPath);
-updatePos()
+updatePos(team)
 drawHex(curHexPath, team[cur]);
+
+const loot = [
+  {hex: {q:8,r:5}, name:"Gladiator's Nostalgia.png"},
+  {hex: {q:5,r:6}, name:"Royal Masque.png"},
+  {hex: {q:1,r:9}, name:"Viridescent Arrow Feather.png"},
+].map(({hex, name}, i) => ({
+  hex,
+  sprite: new PIXI.Sprite(PIXI.Texture.from(`./assets/${name}`)),
+  get x() { return this.sprite.x },
+  get y() { return this.sprite.y }
+}))
+loot.forEach(it => {
+  Object.assign(it.sprite, { interactive:true });
+  it.sprite.anchor.set(0.5);
+  it.sprite.scale.set(0.25);
+  container.addChild(it.sprite);
+});
+updatePos(loot)
 
 const tickers = [
   {speed:60, fn:()=>team.forEach(t => t.sprite.rotation = -t.sprite.rotation)},
   {speed:20, fn:()=>{
     if (!follow) return;
     move(path.shift(), team);
-    updatePos();
+    updatePos(team);
     drawHex(curHexPath, team[cur]);
     drawPath(path, realPath);
     if (path.length !== 0) return;
