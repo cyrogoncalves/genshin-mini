@@ -29,7 +29,7 @@ const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   points.forEach(p => path.lineTo(p.x, p.y));
 }
 
-const app = new PIXI.Application({ width: 800, height: 600,
+const app = new PIXI.Application({ width: 1000, height: 600,
   backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
 document.body.appendChild(app.view);
 
@@ -39,11 +39,15 @@ app.stage.addChild(container);
 container.interactive = true;
 container.hitArea = new PIXI.Rectangle(0, 0, 800, 600);
 
+const inventory = new PIXI.Container();
+Object.assign(inventory, { width:200, height:600, x:800, y:0 });
+app.stage.addChild(inventory);
+
 const selectedHexPath = new PIXI.Graphics();
 app.stage.addChild(selectedHexPath);
 
 const realPath = new PIXI.Graphics();
-app.stage.addChild(realPath)
+container.addChild(realPath)
 let path = null;
 let goal = null;
 let follow = false;
@@ -100,6 +104,8 @@ team.forEach(t => {
 [ // loot on map
   {hex: {q:8,r:5}, name:"Gladiator's Nostalgia.png"},
   {hex: {q:5,r:6}, name:"Royal Masque.png"},
+  {hex: {q:5,r:7}, name:"Royal Masque.png"},
+  {hex: {q:9,r:7}, name:"Royal Masque.png"},
   {hex: {q:1,r:9}, name:"Viridescent Arrow Feather.png"},
 ].map(({hex, name}) => ({
   hex,
@@ -135,6 +141,9 @@ const tickers = [
       entities.splice(entities.findIndex(it=>sameHex(it.hex, goalEntity.hex)), 1);
       console.log("pick!", entities);
       container.removeChild(goalEntity.sprite);
+      inventory.addChild(goalEntity.sprite);
+      [goalEntity.hex.q, goalEntity.hex.r] = [1 + loot.length%2, 1 + Math.floor(loot.length/2)];
+      updatePos(loot);
       realPath.clear();
     }
     selectedHexPath.clear();
@@ -167,7 +176,7 @@ const move = ({q, r}, team) => {
   let [pos0q, pos0r] = [team[cur].hex.q, team[cur].hex.r];
   team[cur].hex = {q:q, r:r};
 
-  const idx = team.findIndex(c=>c!==team[cur] && c.hex.q===team[cur].hex.q && c.hex.r===team[cur].hex.r);
+  const idx = team.findIndex(c=>c!==team[cur] && sameHex(c.hex, team[cur].hex));
   if (idx > 0) return exchangePlaces(team, idx, pos0q, pos0r) // if the hex already had a unit, just exchange places
 
   const slices = [team.slice(0, cur).reverse(), team.slice(cur+1)]
@@ -183,4 +192,4 @@ window.addEventListener("keydown", event => {
   if (delta) { move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team); updatePos(); }
 }, false);
 
-// TODO add collectible & interact, make path prettier
+// TODO make path prettier
