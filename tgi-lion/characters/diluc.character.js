@@ -1,4 +1,4 @@
-import {PYRO} from "./model";
+import {PYRO} from "../model";
 
 /** @type TGICharacter */
 export const Diluc = {
@@ -20,7 +20,7 @@ export const Diluc = {
         effect: (game) => {
             game.oppo.dmg.push(8)
             game.oppo.elements.push(PYRO)
-            game.player.infusions.push({[PYRO]:2})
+            game.player.char.infusions.push({[PYRO]:2})
         }
     }]
 }

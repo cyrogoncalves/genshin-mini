@@ -1,4 +1,4 @@
-import {elements, OMNI} from "./model";
+import {CRYO, elements, OMNI} from "./model";
 
 /**
  * @param {Deck} decks
@@ -16,9 +16,20 @@ export const startGame = (...decks) => ({
   })),
   curPlayerIdx: 0,
   logs:[],
+
+  // shortcuts
   get player() {return this.players[this.curPlayerIdx]},
   get oppo() {return this.players[(this.curPlayerIdx + 1) % this.players.length]},
   canStart() {return !this.players.some(p => p.curCharIdx < 0)},
+
+  // helpers
+  deal(dmg, element) {
+    this.oppo.char.dmg.push(dmg)
+    if (element) this.oppo.char.elements.push(CRYO)
+    if (this.player.char.energy < this.player.char.maxEnergy)
+      this.player.char.energy++
+    return this
+  }
 })
 
 /**
@@ -73,10 +84,6 @@ export function attune(game, userId, dieIdx, cardIdx) {
 }
 
 export const validateCost = (cost, dice) => {
-  // const sortedCost = Object.entries(cost).flatMap(([k,v]) => Array.from({length:v}, ()=>k))
-  // dice = dice.sort((a,b)=>a<b)
-  // if (dice.length !== sortedCost.length) return false
-
   Object.entries(cost).forEach(([k,v]) => {
     if (k==="any") {
       if (v > dice.length) return false
@@ -91,7 +98,6 @@ export const validateCost = (cost, dice) => {
     }
   })
   return dice.length === 0
-  // const paidCost = paidDice.reduce((obj, el)=>({...obj, [el]:(obj[el]||0)+1}), {})
 }
 
 /**

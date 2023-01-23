@@ -12,7 +12,7 @@ export const elements = [PYRO, HYDRO, ANEMO, ELECTRO, DENDRO, CRYO, GEO]
 export const diceCosts = [OMNI, ...elements, "same", "any"]
 
 /**
- * @typedef {{[c in number|"any"|"same"|"energy"]?:number}} Cost
+ * @typedef {{[c in number|"any"|"same"]?:number}} Cost
  * @typedef {{name:string, costs:Cost[], effect:any}} Card
  * @typedef {{name:string, costs:Cost[], type:"normal"|"skill"|"burst", effect:any}} Skill
  * @typedef {"bow"|"spear"|"sword"|"claymore"|"catalysts"} WeaponType

@@ -1,5 +1,5 @@
-import {Collei} from "./collei.character.js";
-import {Diluc} from "./diluc.character.js";
+import {Collei} from "./characters/collei.character.js";
+import {Diluc} from "./characters/diluc.character.js";
 import {ChangingShifts, strategize} from "./cards.js";
 import * as engine from "./engine.js";
 import {DENDRO, OMNI, PYRO} from "./model.js";
@@ -30,12 +30,14 @@ describe("engine", () => {
     expect(game.oppo.dice.length).toBe(5); // consumes dice
     expect(game.player.char.hp).toBe(8); // deals damage
     expect(game.curPlayerIdx).toBe(1); // passes turn
+    expect(game.oppo.char.energy).toBe(1); // charges energy todo
 
     engine.changeCharacter(game, [0])
     expect(game.oppo.dice.length).toBe(7); // consumes dice
     expect(game.oppo.curCharIdx).toBe(0); // changes character
     expect(game.curPlayerIdx).toBe(0); // passes turn
 
+    // play "Changing Shifts"
     engine.playCard(game, 0)
     expect(game.player.hand.length).toBe(0); // discards card
     engine.changeCharacter(game, [])

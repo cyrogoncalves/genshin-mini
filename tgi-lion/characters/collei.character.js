@@ -1,4 +1,4 @@
-import {DENDRO, PYRO} from "./model";
+import {DENDRO} from "../model";
 
 /** @type Summon */
 const cuileinAnbar = {
@@ -23,7 +23,7 @@ export const Collei = {
       oppo.elements.push(DENDRO)
     }
   }, {
-    name:"burst", type:"burst", costs:[{[DENDRO]:3, "energy":2}],
+    name:"burst", type:"burst", costs:[{[DENDRO]:3}],
     effect: (game) => {
       game.player.summons.push({...cuileinAnbar})
     }
