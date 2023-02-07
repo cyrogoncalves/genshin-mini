@@ -31,7 +31,7 @@ const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
 
 const app = new PIXI.Application({ width: 1000, height: 600,
   backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
-document.body.appendChild(app.view);
+document.body.prepend(app.view);
 
 const container = new PIXI.Container();
 Object.assign(container, { width:800, height:600 });
@@ -52,6 +52,7 @@ let path = null;
 let goal = null;
 let follow = false;
 let goalEntity = null;
+let moveCount = 0;
 container.on('pointerdown', ev => {
   const newGoal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
   if (sameHex(goal, newGoal)) return (follow = true); // second click on goal
@@ -67,8 +68,8 @@ container.on('pointerdown', ev => {
   // console.log({path});
   drawPath(path, realPath)
 });
-const drawPath = (path, realPath) => {
-  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(team[cur].x, team[cur].y);
+const drawPath = (path, realPath, {x,y}=team[cur]) => {
+  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(x, y);
   path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y));
 }
 
@@ -132,8 +133,6 @@ const tickers = [
     const step = path.shift();
     if (!sameHex(goalEntity?.hex, step)) {
       move(step, team);
-      updatePos(team);
-      drawHex(curHexPath, team[cur]);
       drawPath(path, realPath);
       if (path.length !== 0) return;
     } else {
@@ -184,12 +183,16 @@ const move = ({q, r}, team) => {
   if (slices[0].length) // if it's in the middle of the line, also just exchange places
     return exchangePlaces(team, team.findIndex(c=>c===slices[0][0]), pos0q, pos0r);
   slices[1].forEach(c=> [c.hex.q, c.hex.r, pos0q, pos0r] = [pos0q, pos0r, c.hex.q, c.hex.r]);
+  updatePos(team);
+  drawHex(curHexPath, team[cur]);
+
+  document.getElementById("moves").innerHTML = String(++moveCount);
 }
 
 const moveMap = { "w":[0, -1], "e":[1, -1], "d":[1, 0], "x":[0, 1], "z":[-1, 1], "a":[-1, 0] };
 window.addEventListener("keydown", event => {
   const delta = moveMap[event.key]
-  if (delta) { move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team); updatePos(); }
+  if (delta) move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team);
 }, false);
 
 // TODO make path prettier
