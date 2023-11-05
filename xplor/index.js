@@ -29,9 +29,10 @@ const drawHex = (path, { x, y }, color = 0xFFFFFF, size = SIZE) => {
   points.forEach(p => path.lineTo(p.x, p.y));
 }
 
+
 const app = new PIXI.Application({ width: 1000, height: 600,
   backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1 });
-document.body.appendChild(app.view);
+document.body.prepend(app.view);
 
 const container = new PIXI.Container();
 Object.assign(container, { width:800, height:600 });
@@ -52,23 +53,21 @@ let path = null;
 let goal = null;
 let follow = false;
 let goalEntity = null;
+let moveCount = 0;
 container.on('pointerdown', ev => {
   const newGoal = pixelToPointyHex(ev.data.global.x, ev.data.global.y);
   if (sameHex(goal, newGoal)) return (follow = true); // second click on goal
-
   goal = newGoal;
-  // console.log({ x: ev.data.global.x, y: ev.data.global.y, q: goal.q, r: goal.r });
   if (team.some(t => sameHex(goal, t.hex))) return; // clicked on a char
 
   goalEntity = entities.find(it => sameHex(goal, it.hex));
   const color = goalEntity ? 0xFF6666 : 0xFFFF66;
   drawHex(selectedHexPath, pointyHexToPixel(goal), color);
   path = omastar(team[cur].hex, goal, entities.map(t=>t.hex).filter(it=>!sameHex(it, goal)));
-  // console.log({path});
   drawPath(path, realPath)
 });
-const drawPath = (path, realPath) => {
-  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(team[cur].x, team[cur].y);
+const drawPath = (path, realPath, {x,y}=team[cur]) => {
+  realPath.clear().lineStyle(2, 0xFFFFFF, 1).moveTo(x, y);
   path.map(p => pointyHexToPixel(p)).forEach(p => realPath.lineTo(p.x, p.y));
 }
 
@@ -80,15 +79,17 @@ const addToContainer = (it, scale = 0.5) => {
   container.addChild(it.sprite);
   entities.push(it);
 }
+const newEntity = (hex, sourceImg) => ({
+  hex,
+  sprite: new PIXI.Sprite(PIXI.Texture.from(sourceImg)),
+  get x() { return this.sprite.x },
+  get y() { return this.sprite.y }
+})
 
 let cur = 0;
 /** @type AvatarEntity[] */
-const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"].map((n, i) => ({
-  hex: { q:i+2, r:3 },
-  sprite: new PIXI.Sprite(PIXI.Texture.from(n)),
-  get x() { return this.sprite.x },
-  get y() { return this.sprite.y }
-}))
+const team = ["lanka.png", "tartartaglia.png", "morax.png", "walnut.png"]
+    .map((n, i) => newEntity({ q:i+2, r:3 }, n));
 team.forEach(t => {
   t.sprite.rotation = 0.06;
   t.sprite.on('pointerdown', () => {
@@ -107,20 +108,17 @@ team.forEach(t => {
   {hex: {q:5,r:7}, name:"Royal Masque.png"},
   {hex: {q:9,r:7}, name:"Royal Masque.png"},
   {hex: {q:1,r:9}, name:"Viridescent Arrow Feather.png"},
-].map(({hex, name}) => ({
-  hex,
-  sprite: new PIXI.Sprite(PIXI.Texture.from(`./assets/${name}`)),
-  get x() { return this.sprite.x },
-  get y() { return this.sprite.y }
-})).forEach(it => addToContainer(it, 0.25));
+].map(({hex, name}) =>
+    newEntity(hex, `./assets/${name}`))
+    .forEach(it => addToContainer(it, 0.25));
 
 const updatePos = (it) => it.forEach(t => {
   const point = pointyHexToPixel(t.hex);
   [t.sprite.x, t.sprite.y] = [point.x, point.y];
 })
+updatePos(entities);
 const curHexPath = new PIXI.Graphics();
 app.stage.addChild(curHexPath);
-updatePos(entities);
 drawHex(curHexPath, team[cur]);
 
 const loot = [];
@@ -132,8 +130,6 @@ const tickers = [
     const step = path.shift();
     if (!sameHex(goalEntity?.hex, step)) {
       move(step, team);
-      updatePos(team);
-      drawHex(curHexPath, team[cur]);
       drawPath(path, realPath);
       if (path.length !== 0) return;
     } else {
@@ -184,12 +180,16 @@ const move = ({q, r}, team) => {
   if (slices[0].length) // if it's in the middle of the line, also just exchange places
     return exchangePlaces(team, team.findIndex(c=>c===slices[0][0]), pos0q, pos0r);
   slices[1].forEach(c=> [c.hex.q, c.hex.r, pos0q, pos0r] = [pos0q, pos0r, c.hex.q, c.hex.r]);
+  updatePos(team);
+  drawHex(curHexPath, team[cur]);
+
+  document.getElementById("moves").innerHTML = String(++moveCount);
 }
 
 const moveMap = { "w":[0, -1], "e":[1, -1], "d":[1, 0], "x":[0, 1], "z":[-1, 1], "a":[-1, 0] };
 window.addEventListener("keydown", event => {
   const delta = moveMap[event.key]
-  if (delta) { move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team); updatePos(); }
+  if (delta) move({q:team[cur].hex.q + delta[0], r:team[cur].hex.r + delta[1]}, team);
 }, false);
 
 // TODO make path prettier
