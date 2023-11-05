@@ -1,5 +1,3 @@
-import {CRYO, elements, OMNI} from "./model";
-
 /**
  * @param {Deck} decks
  * @returns Game
@@ -25,7 +23,7 @@ export const startGame = (...decks) => ({
   // helpers
   deal(dmg, element) {
     this.oppo.char.dmg.push(dmg)
-    if (element) this.oppo.char.elements.push(CRYO)
+    if (element) this.oppo.char.elements.push(element)
     if (this.player.char.energy < this.player.char.maxEnergy)
       this.player.char.energy++
     return this
@@ -61,15 +59,19 @@ const startTurn = (game) => {
  */
 export const attack = (game, userId, costDiceIdx, skillIdx) => {
   const skill = game.player.char.skills[skillIdx]
-  payDice({game, costDiceIdx})
+  // game.action = {type:"atk", skill}
+  // game.aurasFor("atk", game.action) // tick
+  // todo on:atk
+  payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
   // todo resolve reactions
   const dmg = game.oppo.char.dmg.pop() + game.player.char.dmgBonus
   // todo shields
   game.logs.push(`${game.player.char.name} dealt ${dmg}`)
   game.oppo.char.hp -= dmg
+  game.player.char.energy = Math.min((game.player.char.energy??0) + 1, game.player.char.skills.find(s=>s.type==="burst").cost.energy)
   // todo resolve knockouts & character select
-  passTurn({game})
+  passTurn(game)
 }
 
 /**
@@ -83,15 +85,21 @@ export function attune(game, userId, dieIdx, cardIdx) {
   game.player.dice[dieIdx] = game.player.char.element
 }
 
+/**
+ * @param {Cost} cost
+ * @param {number[]} dice
+ */
 export const validateCost = (cost, dice) => {
+  const elements = ["炎","水","風","電","草","岩","氷"]
   Object.entries(cost).forEach(([k,v]) => {
     if (k==="any") {
       if (v > dice.length) return false
       dice.splice(0, v)
     } else {
-      const element = k==="same" ? elements.find(el => dice.filter(d=>d===el||d===OMNI).length >= v) : +k
+      const element = k !== "same" ? elements.indexOf(k)
+        : elements.findIndex(el => dice.filter(d=>d===elements.indexOf(el)||d===7).length >= v)
       for (let i = 0; i < v; i++) {
-        const idx = dice.findIndex(d=>d===element||d===OMNI);
+        const idx = dice.findIndex(d=>d===element||d===7);
         if (idx === -1) return false
         dice.splice(idx, 1)
       }
@@ -105,15 +113,15 @@ export const validateCost = (cost, dice) => {
  * @param {number[]} costDiceIdx
  * @param {Cost} cost
  */
-const payDice = ({game, costDiceIdx, cost}) => {
-  let paidDice = costDiceIdx.map(i => game.player.dice[i])
-  if (!validateCost(cost, paidDice)) return;
+const payDice = (game, costDiceIdx, cost) => {
+  const paidDice = costDiceIdx.map(i => game.player.dice[i])
+  if (!validateCost(cost, paidDice)) return console.error("Invalid cost");
 
   game.player.dice = game.player.dice.filter((_, i)=>!costDiceIdx.includes(i))
 }
 
 /** @param {Game} game */
-const passTurn = ({game}) =>
+const passTurn = (game) =>
   game.curPlayerIdx = (game.curPlayerIdx+1) % game.players.length
 
 /**
@@ -121,8 +129,8 @@ const passTurn = ({game}) =>
  * @param {number[]} costDiceIdx
  */
 export const changeCharacter = (game, costDiceIdx) => {
-  payDice({game, costDiceIdx})
-  passTurn({game})
+  payDice(game, costDiceIdx, {"any":1})
+  passTurn(game)
 }
 
 /**
@@ -135,8 +143,5 @@ export const playCard = (game, cardIdx) => {
 }
 
 //reroll
-//playCard
-//changeChar
 //useSkill
 //surrender
-//endTurn

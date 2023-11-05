@@ -10,6 +10,7 @@ export const strategize = {
   }
 }
 
+/** @type Card */
 export const ChangingShifts = {
   name:"Changing Shifts",
   costs: [], // || "same":0

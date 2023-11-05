@@ -1,22 +1,10 @@
-
-export const PYRO = 0
-export const HYDRO = 1
-export const ANEMO = 2
-export const ELECTRO = 3
-export const DENDRO = 4
-export const CRYO = 5
-export const GEO = 6
-export const OMNI = 7
-
-export const elements = [PYRO, HYDRO, ANEMO, ELECTRO, DENDRO, CRYO, GEO]
-export const diceCosts = [OMNI, ...elements, "same", "any"]
-
 /**
- * @typedef {{[c in number|"any"|"same"]?:number}} Cost
- * @typedef {{name:string, costs:Cost[], effect:any}} Card
- * @typedef {{name:string, costs:Cost[], type:"normal"|"skill"|"burst", effect:any}} Skill
+ * @typedef {"炎"|"水"|"風"|"電"|"草"|"岩"|"氷"} Element
+ * @typedef {{[c in Element|"any"|"same"]?:number}} Cost
+ * @typedef {{name:string, cost:Cost, effect:(Game)=>void}} Card
+ * @typedef {{name:string, cost:Cost, effect:(Game)=>void, type:"normal"|"skill"|"burst"}} Skill
  * @typedef {"bow"|"spear"|"sword"|"claymore"|"catalysts"} WeaponType
- * @typedef {{name:string, nation:string, element:number, weaponType:WeaponType, skills:Skill[]}} TGICharacter
+ * @typedef {{name:string, nation:string, element:Element, weaponType:WeaponType, skills:Skill[]}} TGICharacter
  * @typedef {{name:string, userId:string, characters:TGICharacter[], cards:Card[]}} Deck
  * @typedef {{name:string, at:"end"|"start"|"hit", duration:number, effect:any}} Summon
  * @typedef {{}} Support
