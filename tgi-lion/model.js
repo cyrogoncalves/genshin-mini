@@ -1,6 +1,7 @@
 /**
  * @typedef {"炎"|"水"|"風"|"電"|"草"|"岩"|"氷"} Element
- * @typedef {{[c in Element|"any"|"same"]?:number}} Cost
+ * @typedef {Element|"any"|"same"|"omni"} CostType
+ * @typedef {{[c in CostType]?:number}} Cost
  * @typedef {{name:string, cost:Cost, effect:(Game)=>void}} Card
  * @typedef {{name:string, cost:Cost, effect:(Game)=>void, type:"normal"|"skill"|"burst"}} Skill
  * @typedef {"bow"|"spear"|"sword"|"claymore"|"catalysts"} WeaponType

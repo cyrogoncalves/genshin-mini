@@ -1,19 +1,21 @@
 /**
- * @param {Deck} decks
+ * @param {Deck[]} decks
+ * @param roller
  * @returns Game
  */
-export const startGame = (...decks) => ({
+export const startGame = (decks, roller = rollDice) => ({
   players: decks.map(deck => ({
     deck:[...deck.cards],
-    characters:deck.characters.map(c => ({...c, hp:10, dmg:[], dmgBonus:0})),
+    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10 })),
     userId:deck.userId,
-    hand:[], curCharIdx:-1, dice:[], supports:[], summons:[],
-    effects:[],
+    hand:[], curCharIdx:-1, dice:[], supports:[], summons:[], auras:[],
     get char() {return this.characters[this.curCharIdx]},
     draw(n) {this.hand.push(...this.deck.splice(0, n))}
   })),
   curPlayerIdx: 0,
   logs:[],
+
+  roller,
 
   // shortcuts
   get player() {return this.players[this.curPlayerIdx]},
@@ -22,13 +24,24 @@ export const startGame = (...decks) => ({
 
   // helpers
   deal(dmg, element) {
-    this.oppo.char.dmg.push(dmg)
-    if (element) this.oppo.char.elements.push(element)
-    if (this.player.char.energy < this.player.char.maxEnergy)
+    // { dmg, element, energyGain: 1 }
+    (this.oppo.char.dmg??=[]).push(dmg)
+    if (element) (this.oppo.char.elements??=[]).push(element)
+    if (this.player.char.energy < this.player.char.data.maxEnergy)
       this.player.char.energy++
-    return this
   }
 })
+
+const reactions = {
+  deal: g => {
+    const source = g.player.char
+    const target = g.oppo.char
+    if (source.dmg) target.hit = source.dmg
+    if (source.element) target[source.element] = true
+    const maxEnergy = source.data.skills.find(s=>s.type==="burst").cost.energy
+    if (source.energy < maxEnergy) source.energy++
+  }
+}
 
 /**
  * @param {Game} game
@@ -43,10 +56,15 @@ export function chooseCharacter(game, userId, idx) {
   }
 }
 
+const elements = ["炎","水","風","電","草","岩","氷"];
+
+const rollDice = () => Array.from({length:8},
+  () => elements[Math.floor(Math.random() * 8)])
+
 const startTurn = (game) => {
   // todo process at:start
   game.players.forEach(p => {
-    p.dice = Array.from({length:8}, () => Math.floor(Math.random() * 8));
+    p.dice = game.roller()
     p.rerolls = 0
   })
 }
@@ -58,18 +76,18 @@ const startTurn = (game) => {
  * @param {number} skillIdx
  */
 export const attack = (game, userId, costDiceIdx, skillIdx) => {
-  const skill = game.player.char.skills[skillIdx]
+  const skill = game.player.char.data.skills[skillIdx]
   // game.action = {type:"atk", skill}
   // game.aurasFor("atk", game.action) // tick
   // todo on:atk
   payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
   // todo resolve reactions
-  const dmg = game.oppo.char.dmg.pop() + game.player.char.dmgBonus
+  const dmg = game.oppo.char.dmg.pop()
   // todo shields
   game.logs.push(`${game.player.char.name} dealt ${dmg}`)
   game.oppo.char.hp -= dmg
-  game.player.char.energy = Math.min((game.player.char.energy??0) + 1, game.player.char.skills.find(s=>s.type==="burst").cost.energy)
+  game.player.char.energy = Math.min((game.player.char.energy??0) + 1, game.player.char.data.skills.find(s=>s.type==="burst").cost.energy)
   // todo resolve knockouts & character select
   passTurn(game)
 }
@@ -82,12 +100,12 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
  */
 export function attune(game, userId, dieIdx, cardIdx) {
   game.player.hand.splice(cardIdx, 1)
-  game.player.dice[dieIdx] = game.player.char.element
+  game.player.dice[dieIdx] = game.player.char.data.element
 }
 
 /**
  * @param {Cost} cost
- * @param {number[]} dice
+ * @param {CostType[]} dice
  */
 export const validateCost = (cost, dice) => {
   const elements = ["炎","水","風","電","草","岩","氷"]
@@ -96,10 +114,10 @@ export const validateCost = (cost, dice) => {
       if (v > dice.length) return false
       dice.splice(0, v)
     } else {
-      const element = k !== "same" ? elements.indexOf(k)
-        : elements.findIndex(el => dice.filter(d=>d===elements.indexOf(el)||d===7).length >= v)
+      const element = k !== "same" ? k
+        : elements.find(el => dice.filter(d=>d===el||d==="omni").length >= v)
       for (let i = 0; i < v; i++) {
-        const idx = dice.findIndex(d=>d===element||d===7);
+        const idx = dice.findIndex(d=>d===element||d==="omni");
         if (idx === -1) return false
         dice.splice(idx, 1)
       }

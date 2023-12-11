@@ -1,21 +1,19 @@
-import {Collei} from "./characters/collei.character.js";
-import {Diluc} from "./characters/diluc.character.js";
-import {ChangingShifts, strategize} from "./cards.js";
+import { Collei } from "./characters/collei.character.js";
+import { Diluc } from "./characters/diluc.character.js";
+import { ChangingShifts, Strategize } from "./cards.js";
 import * as engine from "./engine.js";
-
-const PYRO = 0, DENDRO = 5, OMNI = 7
 
 describe("engine", () => {
   it("opponent receives normal attack damage", () => {
     // todo log stream
     /** @type Deck */
     const deck1 = {userId: "0001", name: "deck1",
-      characters: [{...Collei}, {...Diluc}], cards: [{...strategize}, {...ChangingShifts}]}
+      characters: [{...Collei}, {...Diluc}], cards: [{...Strategize}, {...ChangingShifts}]}
     /** @type Deck */
     const deck2 = {userId: "0002", name: "deck2",
       characters: [{...Collei}, {...Diluc}], cards: [{...ChangingShifts}]}
     /** @type Game */
-    const game = engine.startGame(deck1, deck2)
+    const game = engine.startGame([deck1, deck2])
     expect(game.canStart()).toBeFalsy();
     engine.chooseCharacter(game, "0001", 0)
     expect(game.canStart()).toBeFalsy();
@@ -46,19 +44,19 @@ describe("engine", () => {
   });
 
   it("validates costs", () => {
-    expect(engine.validateCost({"炎":3}, [PYRO, PYRO, PYRO])).toBeTruthy()
-    expect(engine.validateCost({"炎":3}, [PYRO, PYRO, DENDRO])).toBeFalsy()
-    expect(engine.validateCost({"炎":3}, [PYRO, PYRO, OMNI])).toBeTruthy()
-    expect(engine.validateCost({"same":3}, [PYRO, PYRO, PYRO])).toBeTruthy()
-    expect(engine.validateCost({"same":3}, [PYRO, PYRO, DENDRO])).toBeFalsy()
-    expect(engine.validateCost({"same":3}, [PYRO, PYRO, OMNI])).toBeTruthy()
-    expect(engine.validateCost({"same":3}, [OMNI, OMNI, OMNI])).toBeTruthy()
-    expect(engine.validateCost({"炎":1,"any":2}, [PYRO, PYRO, PYRO])).toBeTruthy()
-    expect(engine.validateCost({"炎":1,"any":2}, [PYRO, PYRO, DENDRO])).toBeTruthy()
-    expect(engine.validateCost({"炎":1,"any":2}, [PYRO, PYRO, OMNI])).toBeTruthy()
-    expect(engine.validateCost({"炎":1,"any":2}, [DENDRO, DENDRO, DENDRO])).toBeFalsy()
-    expect(engine.validateCost({"炎":1,"any":2}, [DENDRO, OMNI, DENDRO])).toBeTruthy()
-    expect(engine.validateCost({"炎":1,"any":2}, [DENDRO, OMNI])).toBeFalsy()
-    expect(engine.validateCost({"炎":1,"any":2}, [DENDRO, OMNI, PYRO, OMNI])).toBeFalsy()
+    expect(engine.validateCost({"炎":3}, ["炎", "炎", "炎"])).toBeTruthy()
+    expect(engine.validateCost({"炎":3}, ["炎", "炎", "草"])).toBeFalsy()
+    expect(engine.validateCost({"炎":3}, ["炎", "炎", "omni"])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, ["炎", "炎", "炎"])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, ["炎", "炎", "草"])).toBeFalsy()
+    expect(engine.validateCost({"same":3}, ["炎", "炎", "omni"])).toBeTruthy()
+    expect(engine.validateCost({"same":3}, ["omni", "omni", "omni"])).toBeTruthy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["炎", "炎", "炎"])).toBeTruthy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["炎", "炎", "草"])).toBeTruthy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["炎", "炎", "omni"])).toBeTruthy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["草", "草", "草"])).toBeFalsy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["草", "omni", "草"])).toBeTruthy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["草", "omni"])).toBeFalsy()
+    expect(engine.validateCost({"炎":1,"any":2}, ["草", "omni", "炎", "omni"])).toBeFalsy()
   })
 });

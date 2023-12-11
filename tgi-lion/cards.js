@@ -1,5 +1,5 @@
 /** @type Card */
-export const strategize = {
+export const Strategize = {
   name: "Strategize",
   costs: [{"any":1}],
   effect(game, paidCosts) {
@@ -15,10 +15,11 @@ export const ChangingShifts = {
   name:"Changing Shifts",
   costs: [], // || "same":0
   effect(game) {
-    game.player.effects.push({
-      at:"switchCharacter",
-      costModification:{any:-1},
-      count:1
+    game.player.auras.push({
+      switch: {
+        costModification:{any:-1},
+        count:1
+      }
     });
   }
 }
