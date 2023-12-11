@@ -1,6 +1,6 @@
 import { Collei } from "./characters/collei.character.js";
 import { Diluc } from "./characters/diluc.character.js";
-import { ChangingShifts, Strategize } from "./cards.js";
+import { ChangingShifts, Starsigns, Strategize } from "./cards.js";
 import * as engine from "./engine.js";
 
 describe("engine", () => {
@@ -41,6 +41,23 @@ describe("engine", () => {
     expect(game.player.hand.length).toBe(0); // discards card
     engine.changeCharacter(game, [])
     expect(game.oppo.dice.length).toBe(5); // doesn't consumes dice
+
+  });
+
+  it("charges energy for event card 'starsigns'", () => {
+    const game = engine.startGame([
+      { userId: "0001", name: "deck1", characters: [{ ...Collei }], cards: [Starsigns] },
+      { userId: "0002", name: "deck2", characters: [{ ...Collei }], cards: [] }
+    ])
+    engine.chooseCharacter(game, "0001", 0)
+    engine.chooseCharacter(game, "0002", 0)
+
+    // play "Starsigns"
+    engine.playCard(game, 0, [0, 1])
+    expect(game.player.hand.length).toBe(0); // discards card
+    expect(game.player.dice.length).toBe(6); // consumes dice
+    expect(game.curPlayerIdx).toBe(0); // doesn't pass turn
+    expect(game.player.char.energy).toBe(1); // adds energy
   });
 
   it("validates costs", () => {

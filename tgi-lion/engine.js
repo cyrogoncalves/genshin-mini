@@ -27,8 +27,12 @@ export const startGame = (decks, roller = rollDice) => ({
     // { dmg, element, energyGain: 1 }
     (this.oppo.char.dmg??=[]).push(dmg)
     if (element) (this.oppo.char.elements??=[]).push(element)
+    this.charge()
+  },
+  charge(energy=1) {
+    this.player.char.energy ??= 0
     if (this.player.char.energy < this.player.char.data.maxEnergy)
-      this.player.char.energy++
+      this.player.char.energy += energy
   }
 })
 
@@ -154,9 +158,11 @@ export const changeCharacter = (game, costDiceIdx) => {
 /**
  * @param {Game} game
  * @param {number} cardIdx
+ * @param {number[]} costDiceIdx
  */
-export const playCard = (game, cardIdx) => {
+export const playCard = (game, cardIdx, costDiceIdx = []) => {
   const [card] = game.player.hand.splice(cardIdx, 1)
+  payDice(game, costDiceIdx, card.cost) // TODO can't pay
   card.effect(game)
 }
 

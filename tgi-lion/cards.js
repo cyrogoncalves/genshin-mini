@@ -1,7 +1,7 @@
 /** @type Card */
 export const Strategize = {
   name: "Strategize",
-  costs: [{"any":1}],
+  cost: {"any":1},
   effect(game, paidCosts) {
     const cur = game.currentPlayer;
     cur.hand.push(cur.curDeck.pop())
@@ -13,7 +13,7 @@ export const Strategize = {
 /** @type Card */
 export const ChangingShifts = {
   name:"Changing Shifts",
-  costs: [], // || "same":0
+  cost: {}, // or "same":0
   effect(game) {
     game.player.auras.push({
       switch: {
@@ -21,5 +21,15 @@ export const ChangingShifts = {
         count:1
       }
     });
+  }
+}
+
+/** @type Card */
+export const Starsigns = {
+  name:"Starsigns",
+  desc: "Your current active character gains 1 energy.",
+  cost: {"any":2},
+  effect(game) {
+    game.charge();
   }
 }

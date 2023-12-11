@@ -18,7 +18,7 @@
  *   characters: any[],
  *   hand: Card[],
  *   curCharIdx: number,
- *   dice: number[],
+ *   dice: CostType[],
  *   supports: Support[],
  *   summons: Summon[],
  *

@@ -9,7 +9,7 @@ const cuileinAnbar = {
 
 /** @type TGICharacter */
 export const Collei = {
-  name:"Collei", nation:"Sumeru", element:"草", weaponType:"bow", skills: [{
+  name:"Collei", nation:"Sumeru", element:"草", weaponType:"bow", maxEnergy: 2, skills: [{
     name:"normal", type:"normal", cost:{"草":1, "any":2},
     effect: game => game.deal(2)
   }, {

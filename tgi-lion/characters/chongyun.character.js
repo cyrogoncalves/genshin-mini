@@ -1,6 +1,6 @@
 /** @type TGICharacter */
 export const Chongyun = {
-  name: "Chongyun", nation: "Liyue", element: "氷", weaponType: "claymore", skills: [{
+  name: "Chongyun", nation: "Liyue", element: "氷", weaponType: "claymore", maxEnergy: 3, skills: [{
     name: "Tempered Sword", type: "normal", cost: { "氷": 1, "any": 2 }, effect: (game) => game.deal(2)
   }, {
     name: "Chonghua's Layered Frost", type: "skill", cost: { "氷": 3 }, effect: game => {
