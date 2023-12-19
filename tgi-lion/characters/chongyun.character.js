@@ -10,7 +10,7 @@ export const Chongyun = {
         name: "Chonghua's Frost Field",
         use: 2,
         atk: g => g.action.element = "氷",
-        when: g => ["sword", "claymore", "polearm"].includes(g.action.weaponType) && !g.action.element
+        when: g => ["sword", "claymore", "polearm"].includes(g.player.char.data.weaponType) && !g.action.element
       })
     }
   }, {

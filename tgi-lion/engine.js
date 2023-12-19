@@ -15,6 +15,8 @@ export const startGame = (decks, roller = rollDice) => ({
   curPlayerIdx: 0,
   logs:[],
 
+  action: null,
+
   roller,
 
   // shortcuts
@@ -24,10 +26,9 @@ export const startGame = (decks, roller = rollDice) => ({
 
   // helpers
   deal(dmg, element) {
-    // { dmg, element, energyGain: 1 }
-    (this.oppo.char.dmg??=[]).push(dmg)
-    if (element) (this.oppo.char.elements??=[]).push(element)
-    this.charge()
+    this.action = { dmg, element, energyGain: 1 }
+    // (this.oppo.char.dmg??=[]).push(dmg)
+    // this.charge()
   },
   charge(energy=1) {
     this.player.char.energy ??= 0
@@ -35,17 +36,6 @@ export const startGame = (decks, roller = rollDice) => ({
       this.player.char.energy += energy
   }
 })
-
-const reactions = {
-  deal: g => {
-    const source = g.player.char
-    const target = g.oppo.char
-    if (source.dmg) target.hit = source.dmg
-    if (source.element) target[source.element] = true
-    const maxEnergy = source.data.skills.find(s=>s.type==="burst").cost.energy
-    if (source.energy < maxEnergy) source.energy++
-  }
-}
 
 /**
  * @param {Game} game
@@ -60,7 +50,7 @@ export function chooseCharacter(game, userId, idx) {
   }
 }
 
-const elements = ["炎","水","風","電","草","岩","氷"];
+const elements = ["炎","水","風","電","草","岩","氷","*"];
 
 const rollDice = () => Array.from({length:8},
   () => elements[Math.floor(Math.random() * 8)])
@@ -81,17 +71,18 @@ const startTurn = (game) => {
  */
 export const attack = (game, userId, costDiceIdx, skillIdx) => {
   const skill = game.player.char.data.skills[skillIdx]
-  // game.action = {type:"atk", skill}
-  // game.aurasFor("atk", game.action) // tick
-  // todo on:atk
   payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
+  game.player.auras.filter(a => a.atk && (!a.when || a.when(game))).forEach(a => {
+    a.atk(game)
+    if (a.use) a.use--
+  })
   // todo resolve reactions
-  const dmg = game.oppo.char.dmg.pop()
   // todo shields
-  game.logs.push(`${game.player.char.name} dealt ${dmg}`)
-  game.oppo.char.hp -= dmg
-  game.player.char.energy = Math.min((game.player.char.energy??0) + 1, game.player.char.data.skills.find(s=>s.type==="burst").cost.energy)
+  game.logs.push(`${game.player.char.data.name} dealt ${game.action.dmg}`)
+  game.oppo.char.hp -= game.action.dmg
+  if (game.action.element) (game.oppo.char.elements??=[]).push(game.action.element)
+  if (game.action.energyGain) game.charge()
   // todo resolve knockouts & character select
   passTurn(game)
 }
@@ -149,9 +140,11 @@ const passTurn = (game) =>
 /**
  * @param {Game} game
  * @param {number[]} costDiceIdx
+ * @param {number} targetCharIdx
  */
-export const changeCharacter = (game, costDiceIdx) => {
+export const changeCharacter = (game, costDiceIdx, targetCharIdx) => {
   payDice(game, costDiceIdx, {"any":1})
+  game.player.curCharIdx = targetCharIdx // todo validate not same, validate exists
   passTurn(game)
 }
 
