@@ -6,7 +6,7 @@
 export const startGame = (decks, roller = rollDice) => ({
   players: decks.map(deck => ({
     deck:[...deck.cards],
-    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10 })),
+    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10, energy:0 })),
     userId:deck.userId,
     hand:[], curCharIdx:-1, dice:[], supports:[], summons:[], auras:[],
     get char() {return this.characters[this.curCharIdx]},
@@ -27,13 +27,9 @@ export const startGame = (decks, roller = rollDice) => ({
   // helpers
   deal(dmg, element) {
     this.action = { dmg, element, energyGain: 1 }
-    // (this.oppo.char.dmg??=[]).push(dmg)
-    // this.charge()
   },
   charge(energy=1) {
-    this.player.char.energy ??= 0
-    if (this.player.char.energy < this.player.char.data.maxEnergy)
-      this.player.char.energy += energy
+    this.player.char.energy = Math.min(this.player.char.energy + energy, this.player.char.data.maxEnergy)
   }
 })
 
@@ -82,7 +78,8 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   game.logs.push(`${game.player.char.data.name} dealt ${game.action.dmg}`)
   game.oppo.char.hp -= game.action.dmg
   if (game.action.element) (game.oppo.char.elements??=[]).push(game.action.element)
-  if (game.action.energyGain) game.charge()
+  if (game.action.energyGain) game.charge(game.action.energyGain)
+  if (skill.cost.energy) game.player.char.energy -= skill.cost.energy
   // todo resolve knockouts & character select
   passTurn(game)
 }

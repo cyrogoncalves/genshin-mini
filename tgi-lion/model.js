@@ -33,6 +33,9 @@
  *   oppo: Player,
  *   char: TGICharacter,
  *   currentOpposingChar: TGICharacter,
- *   canStart(): boolean
+ *   canStart(): boolean,
+ *   logs: string[],
+ *   action: {},
+ *   charge: (number) => void
  * }} Game
  */
