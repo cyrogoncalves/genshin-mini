@@ -6,7 +6,7 @@
 export const startGame = (decks, roller = rollDice) => ({
   players: decks.map(deck => ({
     deck:[...deck.cards],
-    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10, energy:0 })),
+    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10, energy:0, auras:[] })),
     userId:deck.userId,
     hand:[], curCharIdx:-1, dice:[], supports:[], summons:[], auras:[],
     get char() {return this.characters[this.curCharIdx]},
@@ -14,7 +14,7 @@ export const startGame = (decks, roller = rollDice) => ({
   })),
   curPlayerIdx: 0,
   logs:[],
-
+  actions: [],
   action: null,
 
   roller,
@@ -69,6 +69,7 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   const skill = game.player.char.data.skills[skillIdx]
   payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
+  if (game.action) game.actions.push({ player: game.player, skill })
   game.player.auras.filter(a => a.atk && (!a.when || a.when(game))).forEach(a => {
     a.atk(game)
     if (a.use) a.use--

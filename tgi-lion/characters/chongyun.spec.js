@@ -39,6 +39,7 @@ describe("Chongyun", () => {
       expect(game.oppo.dice.length).toBe(5); // consumes dice
       expect(game.player.char.hp).toBe(7); // deals damage
       expect(game.oppo.char.energy).toBe(1); // charges energy
+      expect(game.player.char.elements[0]).toBe("氷"); // applies cryo
     })
 
     it("other claymore char's normal atk deals 2氷 instead of 2", () => {
