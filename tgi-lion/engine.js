@@ -6,7 +6,7 @@
 export const startGame = (decks, roller = rollDice) => ({
   players: decks.map(deck => ({
     deck:[...deck.cards],
-    characters:deck.characters.map(c => ({ data:c, hp:c.hp??10, energy:0, auras:[] })),
+    characters:deck.characters.map(c => ({ data:c, hp:c.maxHp??10, energy:0, auras:[] })),
     userId:deck.userId,
     hand:[], curCharIdx:-1, dice:[], supports:[], summons:[], auras:[],
     get char() {return this.characters[this.curCharIdx]},
@@ -20,8 +20,9 @@ export const startGame = (decks, roller = rollDice) => ({
   roller,
 
   // shortcuts
-  get player() {return this.players[this.curPlayerIdx]},
-  get oppo() {return this.players[(this.curPlayerIdx + 1) % this.players.length]},
+  get player() { return this.players[this.curPlayerIdx] },
+  get char() { return this.player.char },
+  get oppo() { return this.players[(this.curPlayerIdx + 1) % this.players.length] },
   canStart() {return !this.players.some(p => p.curCharIdx < 0)},
 
   // helpers
@@ -29,7 +30,10 @@ export const startGame = (decks, roller = rollDice) => ({
     this.action = { dmg, element, energyGain: 1 }
   },
   charge(energy=1) {
-    this.player.char.energy = Math.min(this.player.char.energy + energy, this.player.char.data.maxEnergy)
+    this.char.energy = Math.min(this.char.energy + energy, this.char.data.maxEnergy)
+  },
+  heal(amount) {
+    this.char.hp = Math.min(this.char.hp + amount, this.char.data.maxHp ?? 10)
   }
 })
 
@@ -70,10 +74,13 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
   if (game.action) game.actions.push({ player: game.player, skill })
-  game.player.auras.filter(a => a.atk && (!a.when || a.when(game))).forEach(a => {
-    a.atk(game)
-    if (a.use) a.use--
-  })
+  game.player.auras
+    .concat(game.player.char.auras)
+    .filter(a => a.atk && (!a.when || a.when(game)))
+    .forEach(a => {
+      a.atk(game)
+      if (a.use) a.use--
+    })
   // todo resolve reactions
   // todo shields
   game.logs.push(`${game.player.char.data.name} dealt ${game.action.dmg}`)
@@ -102,7 +109,7 @@ export function attune(game, userId, dieIdx, cardIdx) {
  */
 export const validateCost = (cost, dice) => {
   const elements = ["炎","水","風","電","草","岩","氷"]
-  Object.entries(cost).forEach(([k,v]) => {
+  Object.entries(cost ?? {}).forEach(([k,v]) => {
     if (k==="any") {
       if (v > dice.length) return false
       dice.splice(0, v)

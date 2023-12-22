@@ -17,6 +17,7 @@ export const Diluc = {
                 name: "Pyro infusion",
                 use: 2,
                 atk: g => g.action.element = "炎",
+                when: g => !g.action.element
             })
         }
     }]

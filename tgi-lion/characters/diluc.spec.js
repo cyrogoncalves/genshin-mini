@@ -1,9 +1,6 @@
 import * as engine from "../engine";
-import { Chongyun } from "./chongyun.character";
 import { Diluc } from "./diluc.character";
-import { Collei } from "./collei.character";
 import { scamRolls } from "../testUtils";
-import { Starsigns } from "../cards";
 
 describe("Diluc", () => {
   describe("Normal attack", () => {
@@ -27,8 +24,8 @@ describe("Diluc", () => {
   describe("Elemental skill", () => {
     /** @type Game */
     const game = engine.startGame([
-      { userId: "0001", name: "deck1", characters: [{ ...Diluc }, { ...Collei }], cards: [] },
-      { userId: "0002", name: "deck2", characters: [{ ...Diluc }, { ...Collei }], cards: [] }
+      { userId: "0001", name: "deck1", characters: [{ ...Diluc }], cards: [] },
+      { userId: "0002", name: "deck2", characters: [{ ...Diluc }], cards: [] }
     ], scamRolls("omni"))
     engine.chooseCharacter(game, "0001", 0)
     engine.chooseCharacter(game, "0002", 0)
@@ -53,12 +50,18 @@ describe("Diluc", () => {
 
   describe("Elemental burst", () => {
     /** @type Card */
-    const StarsignsOnSteroids = { ...Starsigns, cost: {}, effect: g => g.charge(5) }
+    const StarsignsOnSteroids = { effect: g => g.charge(5) }
+    /** @type Card */
+    const HealAndCleanse = { effect: g => {
+        g.heal(99);
+        g.player.char.elements = []
+      }
+    }
 
     /** @type Game */
     const game = engine.startGame([
       { userId: "0001", name: "deck1", characters: [{ ...Diluc }], cards: [StarsignsOnSteroids] },
-      { userId: "0002", name: "deck2", characters: [{ ...Diluc }], cards: [] }
+      { userId: "0002", name: "deck2", characters: [{ ...Diluc }], cards: [HealAndCleanse] }
     ], scamRolls("omni"))
     engine.chooseCharacter(game, "0001", 0)
     engine.chooseCharacter(game, "0002", 0)
@@ -68,8 +71,21 @@ describe("Diluc", () => {
       engine.attack(game, "0001", [0,1,2], 2)
       expect(game.curPlayerIdx).toBe(1); // passes turn
       expect(game.oppo.dice.length).toBe(5); // consumes dice
-      expect(game.player.char.hp).toBe(2); // deals damage
+      expect(game.char.hp).toBe(2); // deals damage
       expect(game.oppo.char.energy).toBe(0); // depletes energy
+      expect(game.char.elements[0]).toBe("炎"); // applies pyro
+    })
+
+    it("infuses pyro", () => {
+      engine.playCard(game, 0) // heals to full life and cleanses
+      expect(game.char.hp).toBe(10); // heals to max hp
+      expect(game.char.elements?.[0]).toBe(undefined); // removes elements
+      engine.attack(game, "0002", [0,1,2], 1)
+      engine.attack(game, "0001", [0,1,2], 0)
+      expect(game.curPlayerIdx).toBe(1); // passes turn
+      expect(game.oppo.dice.length).toBe(2); // consumes dice
+      expect(game.char.hp).toBe(8); // deals 2 damage
+      expect(game.char.elements[0]).toBe("炎"); // applies pyro
     })
   });
 });
