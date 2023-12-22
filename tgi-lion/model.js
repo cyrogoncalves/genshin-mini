@@ -7,7 +7,9 @@
  * @typedef {"bow"|"spear"|"sword"|"claymore"|"catalysts"} WeaponType
  * @typedef {{name:string, nation:string, element:Element, weaponType:WeaponType, skills:Skill[], [maxHp]:number}} TGICharacter
  * @typedef {{name:string, userId:string, characters:TGICharacter[], cards:Card[]}} Deck
- * @typedef {{name:string, at:"end"|"start"|"hit", duration:number, effect:any}} Summon
+ * @typedef {"end"|"start"|"hit"|"atk"} TriggerAt
+ * @typedef {{[t in TriggerAt]?:(Game) => void}} Trigger
+ * @typedef {{name:string, duration:number, [t in TriggerAt]:(Game) => void}} Summon
  * @typedef {{}} Support
  */
 

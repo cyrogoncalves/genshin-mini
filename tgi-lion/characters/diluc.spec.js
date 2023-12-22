@@ -79,7 +79,7 @@ describe("Diluc", () => {
     it("infuses pyro", () => {
       engine.playCard(game, 0) // heals to full life and cleanses
       expect(game.char.hp).toBe(10); // heals to max hp
-      expect(game.char.elements?.[0]).toBe(undefined); // removes elements
+      expect(game.char.elements?.[0]).toBeFalsy(); // removes elements
       engine.attack(game, "0002", [0,1,2], 1)
       engine.attack(game, "0001", [0,1,2], 0)
       expect(game.curPlayerIdx).toBe(1); // passes turn

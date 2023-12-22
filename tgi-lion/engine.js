@@ -34,6 +34,15 @@ export const startGame = (decks, roller = rollDice) => ({
   },
   heal(amount) {
     this.char.hp = Math.min(this.char.hp + amount, this.char.data.maxHp ?? 10)
+  },
+  trigger(at) {
+    this.player.auras
+      .concat(this.char.auras)
+      .filter(a => a[at] && (!a.when || a.when(this)))
+      .forEach(a => {
+        a[at](this)
+        if (a.use) a.use--
+      })
   }
 })
 
@@ -74,13 +83,7 @@ export const attack = (game, userId, costDiceIdx, skillIdx) => {
   payDice(game, costDiceIdx, skill.cost)
   skill.effect(game)
   if (game.action) game.actions.push({ player: game.player, skill })
-  game.player.auras
-    .concat(game.player.char.auras)
-    .filter(a => a.atk && (!a.when || a.when(game)))
-    .forEach(a => {
-      a.atk(game)
-      if (a.use) a.use--
-    })
+  game.trigger("atk")
   // todo resolve reactions
   // todo shields
   game.logs.push(`${game.player.char.data.name} dealt ${game.action.dmg}`)
@@ -141,6 +144,19 @@ const payDice = (game, costDiceIdx, cost) => {
 /** @param {Game} game */
 const passTurn = (game) =>
   game.curPlayerIdx = (game.curPlayerIdx+1) % game.players.length
+
+/** @param {Game} game */
+export const endTurn = (game) => {
+  if (game.nextFirstPlayer === undefined) {
+    game.nextFirstPlayer = game.curPlayerIdx
+    return passTurn(game)
+  }
+  game.trigger("end")
+  game.curPlayerIdx = game.nextFirstPlayer
+  game.trigger("end")
+  delete game.nextFirstPlayer
+  return startTurn(game)
+}
 
 /**
  * @param {Game} game
